@@ -1,0 +1,3 @@
+host_name,kraken2_db
+human,/path/to/kraken2_human_db
+house_fly,/path/to/kraken2_housefly_db
