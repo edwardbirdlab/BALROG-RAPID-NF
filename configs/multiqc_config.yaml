@@ -15,7 +15,7 @@ run_modules:
   - fastqc
   - fastp
   - kraken
-  - sylph
+  - sylphtax
   - custom_content
 
 sp:
