@@ -19,8 +19,11 @@ run_modules:
   - sylph
   - custom_content
 
-# Disable search pattern overrides (use defaults + path_filters)
-sp: {}
+# Override Sylph search pattern — default expects *.sylphmpa but our
+# pipeline outputs *_profile.tsv.  All other modules keep their defaults.
+sp:
+  sylphtax:
+    fn: '*_profile.tsv'
 
 # Module ordering and disambiguation
 # Each entry can appear multiple times with different path_filters
