@@ -1,7 +1,7 @@
 process KRAKEN2 {
 
     label 'kraken2'
-    container 'ebird013/kraken2:2.1.3'
+    container 'quay.io/biocontainers/kraken2:2.17.1--pl5321h077b44d_0'
 
     input:
         tuple val(sample), path(r1), path(r2)
