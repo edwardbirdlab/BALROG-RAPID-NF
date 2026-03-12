@@ -11,7 +11,6 @@ report_header_info:
   - Pipeline: "BALROG-RAPID"
   - Description: "Phase 1 QC Summary"
 
-# Only run these modules (skip auto-detection of other tools)
 run_modules:
   - fastqc
   - fastp
@@ -19,14 +18,10 @@ run_modules:
   - sylph
   - custom_content
 
-# Override Sylph search pattern — default expects *.sylphmpa but our
-# pipeline outputs *_profile.tsv.  All other modules keep their defaults.
 sp:
   sylphtax:
     fn: '*_profile.tsv'
 
-# Module ordering and disambiguation
-# Each entry can appear multiple times with different path_filters
 module_order:
   - fastqc:
       name: "FastQC (Raw Reads)"
