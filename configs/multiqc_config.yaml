@@ -48,7 +48,7 @@ module_order:
       anchor: "kraken2_host"
       path_filters:
         - "kraken2_host/*_k2report.tsv"
-  - sylph:
+  - sylphtax:
       name: "Sylph (Genome Profiling)"
       anchor: "sylph_profiling"
       path_filters:
