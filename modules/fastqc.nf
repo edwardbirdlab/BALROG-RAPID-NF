@@ -8,6 +8,7 @@ process FASTQC {
 
     output:
         tuple val(sample), path("${sample}_fastqc"), emit: reports
+        path("${sample}_fastqc/*.zip"),              emit: zip
         path("versions.yml"),                        emit: versions
 
     script:

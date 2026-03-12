@@ -41,6 +41,9 @@ Raw FASTQ
   ├─ 3. Host Profiling (Kraken2 x N hosts)  ├─ run in parallel
   └─ 4. AMR Detection                      ─┘
          Diamond BLASTX → seqtk subseq → SPAdes micro-assembly → AMRFinder
+  │
+  ├─ 5. Software Versions (collected from all steps)
+  └─ 6. MultiQC (aggregated QC report)
 ```
 
 ## Host Profiling (Optional)
@@ -79,6 +82,8 @@ Each sample is classified against every host database. This is for contamination
 | `--run_taxonomy` | true | Enable/disable taxonomy profiling |
 | `--run_host_profiling` | true | Enable/disable host profiling |
 | `--run_amr` | true | Enable/disable AMR detection |
+| `--run_multiqc` | true | Enable/disable MultiQC report |
+| `--multiqc_config` | built-in | Path to custom MultiQC config YAML |
 | `--max_cpus` | 36 | Maximum CPUs per process |
 | `--max_memory` | 128.GB | Maximum memory per process |
 
@@ -95,11 +100,16 @@ results/
 │   └── sylph/{sample}_profile.tsv
 ├── host/
 │   └── kraken2/{sample}_{host}_k2report.tsv
-└── amr/
-    ├── diamond/{sample}_diamond_hits.tsv
-    ├── extracted_reads/{sample}_amr_R{1,2}.fastq.gz
-    ├── assemblies/{sample}_contigs.fasta
-    └── amrfinder/{sample}_amrfinder.tsv
+├── amr/
+│   ├── diamond/{sample}_diamond_hits.tsv
+│   ├── extracted_reads/{sample}_amr_R{1,2}.fastq.gz
+│   ├── assemblies/{sample}_contigs.fasta
+│   └── amrfinder/{sample}_amrfinder.tsv
+├── multiqc/
+│   ├── multiqc_report.html
+│   └── multiqc_data/
+└── pipeline_info/
+    └── software_versions.yml
 ```
 
 The `taxonomy/` and `amr/amrfinder/` outputs are directly compatible with Phase 2 (`tools/balrog_riskmap.py`).
@@ -118,3 +128,4 @@ All processes run in containers. No local tool installation needed.
 | seqtk | `quay.io/biocontainers/seqtk:1.5--h577a1d6_1` |
 | SPAdes | `ebird013/spades:3.15.5` |
 | AMRFinder | `ncbi/amr:latest` |
+| MultiQC | `quay.io/biocontainers/multiqc:1.33--pyhdfd78af_0` |

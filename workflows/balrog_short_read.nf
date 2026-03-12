@@ -7,6 +7,7 @@
  *   3. Host profiling (Kraken2 x N hosts) - parallel
  *   4. AMR subset detection (Diamond → seqtk → SPAdes → AMRFinder) - parallel
  *   5. Collect software versions from all steps
+ *   6. MultiQC aggregation report
  *
  * Steps 2-4 all run in parallel after QC completes.
  */
@@ -15,7 +16,9 @@ include { READ_QC          } from '../subworkflows/read_qc'
 include { TAXONOMY         } from '../subworkflows/taxonomy'
 include { HOST_PROFILING   } from '../subworkflows/host_profiling'
 include { AMR_SUBSET       } from '../subworkflows/amr_subset'
-include { COLLECT_VERSIONS } from '../modules/collect_versions'
+include { COLLECT_VERSIONS    } from '../modules/collect_versions'
+include { SUMMARIZE_AMRFINDER } from '../modules/summarize_amrfinder'
+include { MULTIQC             } from '../modules/multiqc'
 
 
 workflow BALROG_SHORT_READ {
@@ -31,11 +34,25 @@ workflow BALROG_SHORT_READ {
         // Collect all versions.yml files from every process
         ch_versions = Channel.empty()
 
+        // Initialize MultiQC collection channels (empty defaults for disabled steps)
+        ch_multiqc_fastqc_raw  = Channel.empty()
+        ch_multiqc_fastp       = Channel.empty()
+        ch_multiqc_fastqc_trim = Channel.empty()
+        ch_multiqc_k2_taxonomy = Channel.empty()
+        ch_multiqc_k2_host     = Channel.empty()
+        ch_multiqc_sylph       = Channel.empty()
+        ch_multiqc_amrfinder   = Channel.empty()
+
         // Step 1: Quality control and trimming
         if (params.run_qc) {
             READ_QC(ch_raw_reads)
             ch_reads    = READ_QC.out.trimmed_fastq
             ch_versions = ch_versions.mix(READ_QC.out.versions)
+
+            // Collect QC outputs for MultiQC
+            ch_multiqc_fastqc_raw  = READ_QC.out.raw_zip
+            ch_multiqc_fastp       = READ_QC.out.fastp_json
+            ch_multiqc_fastqc_trim = READ_QC.out.trim_zip
         } else {
             ch_reads = ch_raw_reads
         }
@@ -44,20 +61,51 @@ workflow BALROG_SHORT_READ {
         if (params.run_taxonomy) {
             TAXONOMY(ch_reads, ch_kraken2_db, ch_sylph_db)
             ch_versions = ch_versions.mix(TAXONOMY.out.versions)
+
+            // Extract file paths from tuples for MultiQC
+            ch_multiqc_k2_taxonomy = TAXONOMY.out.kraken2_report.map { it[-1] }
+            ch_multiqc_sylph       = TAXONOMY.out.sylph_profile.map { it[-1] }
         }
 
         // Step 3: Host profiling (runs in parallel with 2 & 4)
         if (params.run_host_profiling) {
             HOST_PROFILING(ch_reads, ch_host_dbs)
             ch_versions = ch_versions.mix(HOST_PROFILING.out.versions)
+
+            // Extract file paths from tuples for MultiQC
+            ch_multiqc_k2_host = HOST_PROFILING.out.host_reports.map { it[-1] }
         }
 
         // Step 4: AMR detection (runs in parallel with 2 & 3)
         if (params.run_amr) {
             AMR_SUBSET(ch_reads, ch_diamond_db)
             ch_versions = ch_versions.mix(AMR_SUBSET.out.versions)
+
+            // Summarize AMRFinder results for MultiQC custom content
+            SUMMARIZE_AMRFINDER(AMR_SUBSET.out.amrfinder_results)
+            ch_versions = ch_versions.mix(SUMMARIZE_AMRFINDER.out.versions)
+            ch_multiqc_amrfinder = SUMMARIZE_AMRFINDER.out.generalstats
+                .mix(SUMMARIZE_AMRFINDER.out.classes)
+                .mix(SUMMARIZE_AMRFINDER.out.detail)
         }
 
         // Step 5: Combine all software versions
         COLLECT_VERSIONS(ch_versions.collect())
+
+        // Step 6: MultiQC aggregation report
+        if (params.run_multiqc) {
+            ch_multiqc_config = Channel.fromPath(params.multiqc_config, checkIfExists: true)
+
+            MULTIQC(
+                ch_multiqc_fastqc_raw.collect().ifEmpty([]),
+                ch_multiqc_fastp.collect().ifEmpty([]),
+                ch_multiqc_fastqc_trim.collect().ifEmpty([]),
+                ch_multiqc_k2_taxonomy.collect().ifEmpty([]),
+                ch_multiqc_k2_host.collect().ifEmpty([]),
+                ch_multiqc_sylph.collect().ifEmpty([]),
+                ch_multiqc_amrfinder.collect().ifEmpty([]),
+                ch_multiqc_config.first(),
+                COLLECT_VERSIONS.out.combined_versions
+            )
+        }
 }

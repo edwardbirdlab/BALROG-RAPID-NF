@@ -20,7 +20,7 @@ process AMRFINDER {
             --plus
     else
         # Empty contigs - create header-only AMRFinder output
-        echo -e "Protein identifier\\tContig id\\tStart\\tStop\\tStrand\\tGene symbol\\tSequence name\\tScope\\tElement type\\tElement subtype\\tClass\\tSubclass\\tMethod\\tTarget length\\tReference sequence length\\t% Coverage of reference sequence\\t% Identity to reference sequence\\tAlignment length\\tAccession of closest sequence\\tName of closest sequence\\tHMM id\\tHMM description" > ${sample}_amrfinder.tsv
+        echo -e "Protein id\\tContig id\\tStart\\tStop\\tStrand\\tElement symbol\\tElement name\\tScope\\tType\\tSubtype\\tClass\\tSubclass\\tMethod\\tTarget length\\tReference sequence length\\t% Coverage of reference\\t% Identity to reference\\tAlignment length\\tClosest reference accession\\tClosest reference name\\tHMM id\\tHMM description" > ${sample}_amrfinder.tsv
     fi
 
     cat <<-END_VERSIONS > versions.yml

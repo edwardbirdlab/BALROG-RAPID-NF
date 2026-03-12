@@ -95,6 +95,7 @@ workflow {
      Run Taxonomy : ${params.run_taxonomy}
      Run Host     : ${params.run_host_profiling}
      Run AMR      : ${params.run_amr}
+     Run MultiQC  : ${params.run_multiqc}
     ======================================
     """.stripIndent()
 

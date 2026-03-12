@@ -1,0 +1,85 @@
+# BALROG-RAPID MultiQC Configuration
+#
+# Aggregates QC reports from the integrated Nextflow pipeline.
+# Files are staged into named subdirectories by the MULTIQC process;
+# path_filters reference those subdirectory names.
+
+title: "BALROG-RAPID Pipeline QC Report"
+subtitle: "Metagenomic pathogen detection, host profiling, and AMR detection"
+
+report_header_info:
+  - Pipeline: "BALROG-RAPID"
+  - Description: "Phase 1 QC Summary"
+
+# Only run these modules (skip auto-detection of other tools)
+run_modules:
+  - fastqc
+  - fastp
+  - kraken
+  - sylph
+  - custom_content
+
+# Disable search pattern overrides (use defaults + path_filters)
+sp: {}
+
+# Module ordering and disambiguation
+# Each entry can appear multiple times with different path_filters
+module_order:
+  - fastqc:
+      name: "FastQC (Raw Reads)"
+      anchor: "fastqc_raw"
+      path_filters:
+        - "fastqc_raw/*_fastqc.zip"
+  - fastp:
+      name: "FASTP (Trimming)"
+      anchor: "fastp_trimming"
+      path_filters:
+        - "fastp/*.json"
+  - fastqc:
+      name: "FastQC (Trimmed Reads)"
+      anchor: "fastqc_trimmed"
+      path_filters:
+        - "fastqc_trimmed/*_fastqc.zip"
+  - kraken:
+      name: "Kraken2 (Taxonomy)"
+      anchor: "kraken2_taxonomy"
+      path_filters:
+        - "kraken2_taxonomy/*_k2report.tsv"
+  - kraken:
+      name: "Kraken2 (Host Profiling)"
+      anchor: "kraken2_host"
+      path_filters:
+        - "kraken2_host/*_k2report.tsv"
+  - sylph:
+      name: "Sylph (Genome Profiling)"
+      anchor: "sylph_profiling"
+      path_filters:
+        - "sylph/*_profile.tsv"
+
+# Clean up sample names (strip common suffixes for cleaner tables)
+extra_fn_clean_exts:
+  - type: "regex"
+    pattern: "_trimmed_R[12]"
+  - type: "regex"
+    pattern: "_R[12]_001"
+  - "_fastp"
+  - "_k2report"
+  - "_profile"
+  - "_amrfinder_generalstats_mqc"
+  - "_amrfinder_classes_mqc"
+  - "_amrfinder_detail_mqc"
+
+# General stats table: show key columns
+table_columns_visible:
+  "FastQC (Raw Reads)":
+    percent_gc: true
+    avg_sequence_length: true
+    total_sequences: true
+    percent_duplicates: true
+    percent_fails: true
+  "FastQC (Trimmed Reads)":
+    percent_gc: true
+    avg_sequence_length: true
+    total_sequences: true
+    percent_duplicates: true
+    percent_fails: true

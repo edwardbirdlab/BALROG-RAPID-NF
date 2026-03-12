@@ -25,5 +25,7 @@ workflow READ_QC {
         fastp_html      = FASTP.out.html
         raw_qc_reports  = FASTQC_RAW.out.reports
         trim_qc_reports = FASTQC_TRIMMED.out.reports
+        raw_zip         = FASTQC_RAW.out.zip         // zip files for MultiQC
+        trim_zip        = FASTQC_TRIMMED.out.zip     // zip files for MultiQC
         versions        = FASTQC_RAW.out.versions.mix(FASTP.out.versions, FASTQC_TRIMMED.out.versions)
 }
