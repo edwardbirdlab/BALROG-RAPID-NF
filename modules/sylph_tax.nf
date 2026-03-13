@@ -27,7 +27,7 @@ process SYLPH_TAX {
     script:
     """
     # Point sylph-tax at the staged taxonomy database directory
-    export SYLPH_TAXONOMY_CONFIG="${taxonomy_db}/config.json"
+    export SYLPH_TAXONOMY_CONFIG="\${PWD}/${taxonomy_db}/config.json"
 
     sylph-tax taxprof ${profile_tsv} -t ${taxonomy_name}
 
