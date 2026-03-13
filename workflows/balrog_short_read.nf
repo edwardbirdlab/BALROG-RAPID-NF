@@ -2,7 +2,7 @@
  * BALROG Short Read Pipeline Workflow
  *
  * Orchestrates all subworkflows:
- *   1. Read QC (FASTP + FastQC)
+ *   1. Read QC (FASTP + optional BBDuk + FastQC)
  *   2. Taxonomy profiling (Kraken2 + Sylph) - parallel
  *   3. Host profiling (Kraken2 x N hosts) - parallel
  *   4. AMR subset detection (Diamond → seqtk → SPAdes → AMRFinder) - parallel
@@ -24,11 +24,13 @@ include { MULTIQC             } from '../modules/multiqc'
 workflow BALROG_SHORT_READ {
 
     take:
-        ch_raw_reads    // tuple(sample, r1, r2)
-        ch_kraken2_db   // path to unified Kraken2 database
-        ch_sylph_db     // path to Sylph database
-        ch_diamond_db   // path to Diamond AMR database
-        ch_host_dbs     // tuple(host_name, path_to_db) - can be empty channel
+        ch_raw_reads      // tuple(sample, r1, r2)
+        ch_kraken2_db     // path to unified Kraken2 database
+        ch_sylph_db       // path to Sylph database
+        ch_diamond_db     // path to Diamond AMR database
+        ch_host_dbs       // tuple(host_name, path_to_db) - can be empty channel
+        ch_sylph_tax_db   // path to pre-downloaded sylph-tax taxonomy DB directory
+        ch_bbduk_adapters // path to adapter FASTA for BBDuk (value channel)
 
     main:
         // Collect all versions.yml files from every process
@@ -37,6 +39,7 @@ workflow BALROG_SHORT_READ {
         // Initialize MultiQC collection channels (empty defaults for disabled steps)
         ch_multiqc_fastqc_raw  = Channel.empty()
         ch_multiqc_fastp       = Channel.empty()
+        ch_multiqc_bbduk       = Channel.empty()
         ch_multiqc_fastqc_trim = Channel.empty()
         ch_multiqc_k2_taxonomy = Channel.empty()
         ch_multiqc_k2_host     = Channel.empty()
@@ -45,13 +48,14 @@ workflow BALROG_SHORT_READ {
 
         // Step 1: Quality control and trimming
         if (params.run_qc) {
-            READ_QC(ch_raw_reads)
+            READ_QC(ch_raw_reads, ch_bbduk_adapters)
             ch_reads    = READ_QC.out.trimmed_fastq
             ch_versions = ch_versions.mix(READ_QC.out.versions)
 
             // Collect QC outputs for MultiQC
             ch_multiqc_fastqc_raw  = READ_QC.out.raw_zip
             ch_multiqc_fastp       = READ_QC.out.fastp_json
+            ch_multiqc_bbduk       = READ_QC.out.bbduk_log
             ch_multiqc_fastqc_trim = READ_QC.out.trim_zip
         } else {
             ch_reads = ch_raw_reads
@@ -59,12 +63,12 @@ workflow BALROG_SHORT_READ {
 
         // Step 2: Taxonomy profiling (runs in parallel with 3 & 4)
         if (params.run_taxonomy) {
-            TAXONOMY(ch_reads, ch_kraken2_db, ch_sylph_db)
+            TAXONOMY(ch_reads, ch_kraken2_db, ch_sylph_db, ch_sylph_tax_db)
             ch_versions = ch_versions.mix(TAXONOMY.out.versions)
 
             // Extract file paths from tuples for MultiQC
             ch_multiqc_k2_taxonomy = TAXONOMY.out.kraken2_report.map { it[-1] }
-            ch_multiqc_sylph       = TAXONOMY.out.sylph_profile.map { it[-1] }
+            ch_multiqc_sylph       = TAXONOMY.out.sylph_tax_mpa
         }
 
         // Step 3: Host profiling (runs in parallel with 2 & 4)
@@ -99,6 +103,7 @@ workflow BALROG_SHORT_READ {
             MULTIQC(
                 ch_multiqc_fastqc_raw.collect().ifEmpty([]),
                 ch_multiqc_fastp.collect().ifEmpty([]),
+                ch_multiqc_bbduk.collect().ifEmpty([]),
                 ch_multiqc_fastqc_trim.collect().ifEmpty([]),
                 ch_multiqc_k2_taxonomy.collect().ifEmpty([]),
                 ch_multiqc_k2_host.collect().ifEmpty([]),

@@ -35,7 +35,8 @@ A separate metadata CSV (sample, site, coordinates, etc.) is used by Phase 2 and
 ```
 Raw FASTQ
   │
-  ├─ 1. Read QC (FASTP + FastQC)
+  ├─ 1. Read QC
+  │     FASTP → [optional BBDuk] → FastQC
   │
   ├─ 2. Taxonomy (Kraken2 + Sylph)        ─┐
   ├─ 3. Host Profiling (Kraken2 x N hosts)  ├─ run in parallel
@@ -62,6 +63,21 @@ chicken,/path/to/kraken2_chicken_db
 
 Each sample is classified against every host database. This is for contamination reporting only — reads are **not** filtered.
 
+## Element Biosciences Aviti Adapter Trimming (Optional)
+
+When sequencing on an Element Biosciences Aviti instrument, reads may contain platform-specific adapter sequences that FASTP doesn't fully remove. Enable the optional BBDuk trimming step to clean these:
+
+```bash
+nextflow run nextflow/main.nf \
+  --sample_sheet samplesheet.csv \
+  --run_bbduk \
+  ...
+```
+
+BBDuk runs **after FASTP but before FastQC (Trimmed)**, so the final QC reflects fully cleaned reads. The adapter FASTA defaults to the Element Aviti concatenated adapter file and does not need to be specified unless you have a custom one.
+
+BBDuk trimming stats appear automatically in the MultiQC report when enabled.
+
 ## Parameters
 
 | Parameter | Default | Description |
@@ -79,6 +95,11 @@ Each sample is classified against every host database. This is for contamination
 | `--diamond_evalue` | 1e-10 | Diamond E-value threshold |
 | `--diamond_max_targets` | 500 | Diamond max target sequences |
 | `--run_qc` | true | Enable/disable read QC |
+| `--run_bbduk` | false | Enable BBDuk adapter trimming (Element Aviti) |
+| `--bbduk_adapters` | Element Aviti URL | Path or URL to adapter FASTA for BBDuk |
+| `--bbduk_ktrim` | `r` | BBDuk kmer trim direction |
+| `--bbduk_hdist` | 1 | BBDuk Hamming distance tolerance |
+| `--bbduk_additional_args` | `''` | Extra bbduk.sh arguments |
 | `--run_taxonomy` | true | Enable/disable taxonomy profiling |
 | `--run_host_profiling` | true | Enable/disable host profiling |
 | `--run_amr` | true | Enable/disable AMR detection |
@@ -94,6 +115,7 @@ results/
 ├── qc/
 │   ├── fastqc_raw/
 │   ├── fastp/
+│   ├── bbduk/                                   # only when --run_bbduk
 │   └── fastqc_trimmed/
 ├── taxonomy/
 │   ├── kraken2/{sample}_k2report.tsv
@@ -128,4 +150,6 @@ All processes run in containers. No local tool installation needed.
 | seqtk | `quay.io/biocontainers/seqtk:1.5--h577a1d6_1` |
 | SPAdes | `ebird013/spades:3.15.5` |
 | AMRFinder | `ncbi/amr:latest` |
+| BBMap (BBDuk) | `ebird013/bbmap:latest` |
+| Sylph-tax | `quay.io/biocontainers/sylph-tax:1.8.0--pyhdfd78af_0` |
 | MultiQC | `quay.io/biocontainers/multiqc:1.33--pyhdfd78af_0` |

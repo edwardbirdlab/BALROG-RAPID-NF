@@ -42,6 +42,14 @@ if (params.run_amr && !params.diamond_db) {
     error "ERROR: --diamond_db is required when AMR detection is enabled"
 }
 
+if (params.run_taxonomy && !params.sylph_tax_db) {
+    log.warn "WARNING: --sylph_tax_db is not set. Sylph taxonomy profiles (.sylphmpa) will not be generated for MultiQC."
+}
+
+if (params.run_bbduk && !params.bbduk_adapters) {
+    error "ERROR: --bbduk_adapters is required when BBDuk trimming is enabled (--run_bbduk)"
+}
+
 
 // -------------------------------------------------------------------
 // Channel setup
@@ -61,7 +69,13 @@ ch_raw_reads = Channel
 // Database channels
 ch_kraken2_db = params.kraken2_db ? Channel.fromPath(params.kraken2_db, checkIfExists: true).first() : Channel.empty()
 ch_sylph_db   = params.sylph_db   ? Channel.fromPath(params.sylph_db,   checkIfExists: true).first() : Channel.empty()
-ch_diamond_db = params.diamond_db ? Channel.fromPath(params.diamond_db, checkIfExists: true).first() : Channel.empty()
+ch_diamond_db   = params.diamond_db   ? Channel.fromPath(params.diamond_db,   checkIfExists: true).first() : Channel.empty()
+ch_sylph_tax_db = params.sylph_tax_db ? Channel.fromPath(params.sylph_tax_db, checkIfExists: true).first() : Channel.empty()
+
+// BBDuk adapter channel (optional, for Element Biosciences Aviti runs)
+ch_bbduk_adapters = params.run_bbduk && params.bbduk_adapters
+    ? Channel.fromPath(params.bbduk_adapters).first()
+    : Channel.value([])
 
 // Host database channel (optional)
 // CSV format: host_name,kraken2_db
@@ -89,9 +103,13 @@ workflow {
      Output dir   : ${params.outdir}
      Kraken2 DB   : ${params.kraken2_db ?: 'not set'}
      Sylph DB     : ${params.sylph_db ?: 'not set'}
+     Sylph-tax DB : ${params.sylph_tax_db ?: 'not set'}
+     Sylph-tax TX : ${params.sylph_tax_taxonomy}
      Diamond DB   : ${params.diamond_db ?: 'not set'}
      Host sheet   : ${params.host_sheet ?: 'not set'}
      Run QC       : ${params.run_qc}
+     Run BBDuk    : ${params.run_bbduk}
+     BBDuk Adapt  : ${params.run_bbduk ? (params.bbduk_adapters ?: 'not set') : 'N/A'}
      Run Taxonomy : ${params.run_taxonomy}
      Run Host     : ${params.run_host_profiling}
      Run AMR      : ${params.run_amr}
@@ -104,6 +122,8 @@ workflow {
         ch_kraken2_db,
         ch_sylph_db,
         ch_diamond_db,
-        ch_host_dbs
+        ch_host_dbs,
+        ch_sylph_tax_db,
+        ch_bbduk_adapters
     )
 }

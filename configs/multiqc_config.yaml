@@ -14,13 +14,13 @@ report_header_info:
 run_modules:
   - fastqc
   - fastp
+  - bbduk
   - kraken
   - sylphtax
   - custom_content
 
-sp:
-  sylphtax:
-    fn: '*_profile.tsv'
+# Use default search patterns for all modules.
+# sylphtax defaults to *.sylphmpa which matches our SYLPH_TAX output.
 
 module_order:
   - fastqc:
@@ -33,6 +33,11 @@ module_order:
       anchor: "fastp_trimming"
       path_filters:
         - "fastp/*.json"
+  - bbduk:
+      name: "BBDuk (Element Aviti Trimming)"
+      anchor: "bbduk_trimming"
+      path_filters:
+        - "bbduk/*.log"
   - fastqc:
       name: "FastQC (Trimmed Reads)"
       anchor: "fastqc_trimmed"
@@ -52,7 +57,7 @@ module_order:
       name: "Sylph (Genome Profiling)"
       anchor: "sylph_profiling"
       path_filters:
-        - "sylph/*_profile.tsv"
+        - "sylph/*.sylphmpa"
 
 # Clean up sample names (strip common suffixes for cleaner tables)
 extra_fn_clean_exts:
@@ -63,6 +68,7 @@ extra_fn_clean_exts:
   - "_fastp"
   - "_k2report"
   - "_profile"
+  - "_bbduk"
   - "_amrfinder_generalstats_mqc"
   - "_amrfinder_classes_mqc"
   - "_amrfinder_detail_mqc"

@@ -6,6 +6,7 @@ process MULTIQC {
     input:
         path('fastqc_raw/*')
         path('fastp/*')
+        path('bbduk/*')
         path('fastqc_trimmed/*')
         path('kraken2_taxonomy/*')
         path('kraken2_host/*')
