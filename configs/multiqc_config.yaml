@@ -15,6 +15,7 @@ run_modules:
   - fastqc
   - fastp
   - bbduk
+  - bowtie2
   - kraken
   - sylphtax
   - custom_content
@@ -38,6 +39,11 @@ module_order:
       anchor: "bbduk_trimming"
       path_filters:
         - "bbduk/*.log"
+  - bowtie2:
+      name: "Bowtie2 (Spike-in Removal)"
+      anchor: "bowtie2_spike"
+      path_filters:
+        - "bowtie2_spike/*.log"
   - fastqc:
       name: "FastQC (Trimmed Reads)"
       anchor: "fastqc_trimmed"
@@ -69,6 +75,9 @@ extra_fn_clean_exts:
   - "_k2report"
   - "_profile"
   - "_bbduk"
+  - "_bowtie2_spike"
+  - "_spike_removed"
+  - "_spike_stats"
   - "_amrfinder_generalstats_mqc"
   - "_amrfinder_classes_mqc"
   - "_amrfinder_detail_mqc"

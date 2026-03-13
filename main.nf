@@ -50,6 +50,10 @@ if (params.run_bbduk && !params.bbduk_adapters) {
     error "ERROR: --bbduk_adapters is required when BBDuk trimming is enabled (--run_bbduk)"
 }
 
+if (params.run_spike_in && !params.spike_in_bt2) {
+    error "ERROR: --spike_in_bt2 is required when spike-in removal is enabled (--run_spike_in)"
+}
+
 
 // -------------------------------------------------------------------
 // Channel setup
@@ -75,6 +79,11 @@ ch_sylph_tax_db = params.sylph_tax_db ? Channel.fromPath(params.sylph_tax_db, ch
 // BBDuk adapter channel (optional, for Element Biosciences Aviti runs)
 ch_bbduk_adapters = params.run_bbduk && params.bbduk_adapters
     ? Channel.fromPath(params.bbduk_adapters).first()
+    : Channel.value([])
+
+// Spike-in Bowtie2 index channel (optional, for T. thermophilus spike-in removal)
+ch_spike_in_bt2 = params.run_spike_in && params.spike_in_bt2
+    ? Channel.fromPath(params.spike_in_bt2, checkIfExists: true).first()
     : Channel.value([])
 
 // Host database channel (optional)
@@ -110,6 +119,8 @@ workflow {
      Run QC       : ${params.run_qc}
      Run BBDuk    : ${params.run_bbduk}
      BBDuk Adapt  : ${params.run_bbduk ? (params.bbduk_adapters ?: 'not set') : 'N/A'}
+     Run Spike-in : ${params.run_spike_in}
+     Spike-in Idx : ${params.run_spike_in ? (params.spike_in_bt2 ?: 'not set') : 'N/A'}
      Run Taxonomy : ${params.run_taxonomy}
      Run Host     : ${params.run_host_profiling}
      Run AMR      : ${params.run_amr}
@@ -124,6 +135,7 @@ workflow {
         ch_diamond_db,
         ch_host_dbs,
         ch_sylph_tax_db,
-        ch_bbduk_adapters
+        ch_bbduk_adapters,
+        ch_spike_in_bt2
     )
 }

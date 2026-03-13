@@ -8,6 +8,7 @@ process MULTIQC {
         path('fastp/*')
         path('bbduk/*')
         path('fastqc_trimmed/*')
+        path('bowtie2_spike/*')
         path('kraken2_taxonomy/*')
         path('kraken2_host/*')
         path('sylph/*')

@@ -38,6 +38,8 @@ Raw FASTQ
   ├─ 1. Read QC
   │     FASTP → [optional BBDuk] → FastQC
   │
+  ├─ 1b. [optional] Spike-in Removal (Bowtie2 vs T. thermophilus)
+  │
   ├─ 2. Taxonomy (Kraken2 + Sylph)        ─┐
   ├─ 3. Host Profiling (Kraken2 x N hosts)  ├─ run in parallel
   └─ 4. AMR Detection                      ─┘
@@ -78,6 +80,29 @@ BBDuk runs **after FASTP but before FastQC (Trimmed)**, so the final QC reflects
 
 BBDuk trimming stats appear automatically in the MultiQC report when enabled.
 
+The adapter FASTA is bundled in the pipeline at `assets/element_aviti_adapters.fasta` and does not require internet access at runtime.
+
+## T. thermophilus Spike-in Removal (Optional)
+
+When T. thermophilus is used as a spike-in control, enable Bowtie2 alignment to remove spike-in reads before downstream analysis:
+
+```bash
+nextflow run nextflow/main.nf \
+  --sample_sheet samplesheet.csv \
+  --run_spike_in \
+  ...
+```
+
+A pre-built Bowtie2 index for T. thermophilus HB8 is bundled in the pipeline at `assets/t_thermophilus_bt2/`. The step runs **after QC but before taxonomy, host profiling, and AMR detection**, so all downstream analyses use spike-depleted reads.
+
+Spike-in alignment statistics appear in the MultiQC report and per-sample stats TSV files are published to `results/spike_in/`.
+
+To use a custom spike-in reference, build a Bowtie2 index and pass the directory:
+
+```bash
+--spike_in_bt2 /path/to/custom_bt2_index/
+```
+
 ## Parameters
 
 | Parameter | Default | Description |
@@ -96,10 +121,12 @@ BBDuk trimming stats appear automatically in the MultiQC report when enabled.
 | `--diamond_max_targets` | 500 | Diamond max target sequences |
 | `--run_qc` | true | Enable/disable read QC |
 | `--run_bbduk` | false | Enable BBDuk adapter trimming (Element Aviti) |
-| `--bbduk_adapters` | Element Aviti URL | Path or URL to adapter FASTA for BBDuk |
+| `--bbduk_adapters` | bundled | Path to adapter FASTA for BBDuk |
 | `--bbduk_ktrim` | `r` | BBDuk kmer trim direction |
 | `--bbduk_hdist` | 1 | BBDuk Hamming distance tolerance |
 | `--bbduk_additional_args` | `''` | Extra bbduk.sh arguments |
+| `--run_spike_in` | false | Enable T. thermophilus spike-in removal |
+| `--spike_in_bt2` | bundled | Path to pre-built Bowtie2 index directory |
 | `--run_taxonomy` | true | Enable/disable taxonomy profiling |
 | `--run_host_profiling` | true | Enable/disable host profiling |
 | `--run_amr` | true | Enable/disable AMR detection |
@@ -117,6 +144,9 @@ results/
 │   ├── fastp/
 │   ├── bbduk/                                   # only when --run_bbduk
 │   └── fastqc_trimmed/
+├── spike_in/                                      # only when --run_spike_in
+│   ├── {sample}_spike_stats.tsv
+│   └── {sample}_bowtie2_spike.log
 ├── taxonomy/
 │   ├── kraken2/{sample}_k2report.tsv
 │   └── sylph/{sample}_profile.tsv
@@ -150,6 +180,7 @@ All processes run in containers. No local tool installation needed.
 | seqtk | `quay.io/biocontainers/seqtk:1.5--h577a1d6_1` |
 | SPAdes | `ebird013/spades:3.15.5` |
 | AMRFinder | `ncbi/amr:latest` |
+| Bowtie2 (Spike-in) | `biocontainers/bowtie2:v2.4.1_cv1` |
 | BBMap (BBDuk) | `ebird013/bbmap:latest` |
 | Sylph-tax | `quay.io/biocontainers/sylph-tax:1.8.0--pyhdfd78af_0` |
 | MultiQC | `quay.io/biocontainers/multiqc:1.33--pyhdfd78af_0` |

@@ -3,22 +3,24 @@
  *
  * Orchestrates all subworkflows:
  *   1. Read QC (FASTP + optional BBDuk + FastQC)
+ *   1b. Optional spike-in removal (Bowtie2 vs T. thermophilus)
  *   2. Taxonomy profiling (Kraken2 + Sylph) - parallel
  *   3. Host profiling (Kraken2 x N hosts) - parallel
  *   4. AMR subset detection (Diamond → seqtk → SPAdes → AMRFinder) - parallel
  *   5. Collect software versions from all steps
  *   6. MultiQC aggregation report
  *
- * Steps 2-4 all run in parallel after QC completes.
+ * Steps 2-4 all run in parallel after QC (and optional spike-in removal) completes.
  */
 
 include { READ_QC          } from '../subworkflows/read_qc'
 include { TAXONOMY         } from '../subworkflows/taxonomy'
 include { HOST_PROFILING   } from '../subworkflows/host_profiling'
 include { AMR_SUBSET       } from '../subworkflows/amr_subset'
-include { COLLECT_VERSIONS    } from '../modules/collect_versions'
-include { SUMMARIZE_AMRFINDER } from '../modules/summarize_amrfinder'
-include { MULTIQC             } from '../modules/multiqc'
+include { SPIKE_IN_REMOVAL      } from '../modules/spike_in_removal'
+include { COLLECT_VERSIONS      } from '../modules/collect_versions'
+include { SUMMARIZE_AMRFINDER   } from '../modules/summarize_amrfinder'
+include { MULTIQC               } from '../modules/multiqc'
 
 
 workflow BALROG_SHORT_READ {
@@ -31,6 +33,7 @@ workflow BALROG_SHORT_READ {
         ch_host_dbs       // tuple(host_name, path_to_db) - can be empty channel
         ch_sylph_tax_db   // path to pre-downloaded sylph-tax taxonomy DB directory
         ch_bbduk_adapters // path to adapter FASTA for BBDuk (value channel)
+        ch_spike_in_bt2   // path to pre-built Bowtie2 index directory (value channel)
 
     main:
         // Collect all versions.yml files from every process
@@ -41,6 +44,7 @@ workflow BALROG_SHORT_READ {
         ch_multiqc_fastp       = Channel.empty()
         ch_multiqc_bbduk       = Channel.empty()
         ch_multiqc_fastqc_trim = Channel.empty()
+        ch_multiqc_spike_in    = Channel.empty()
         ch_multiqc_k2_taxonomy = Channel.empty()
         ch_multiqc_k2_host     = Channel.empty()
         ch_multiqc_sylph       = Channel.empty()
@@ -59,6 +63,14 @@ workflow BALROG_SHORT_READ {
             ch_multiqc_fastqc_trim = READ_QC.out.trim_zip
         } else {
             ch_reads = ch_raw_reads
+        }
+
+        // Step 1b: Spike-in removal (optional, after QC, before downstream analysis)
+        if (params.run_spike_in) {
+            SPIKE_IN_REMOVAL(ch_reads, ch_spike_in_bt2)
+            ch_reads    = SPIKE_IN_REMOVAL.out.cleaned_reads
+            ch_versions = ch_versions.mix(SPIKE_IN_REMOVAL.out.versions)
+            ch_multiqc_spike_in = SPIKE_IN_REMOVAL.out.log
         }
 
         // Step 2: Taxonomy profiling (runs in parallel with 3 & 4)
@@ -105,6 +117,7 @@ workflow BALROG_SHORT_READ {
                 ch_multiqc_fastp.collect().ifEmpty([]),
                 ch_multiqc_bbduk.collect().ifEmpty([]),
                 ch_multiqc_fastqc_trim.collect().ifEmpty([]),
+                ch_multiqc_spike_in.collect().ifEmpty([]),
                 ch_multiqc_k2_taxonomy.collect().ifEmpty([]),
                 ch_multiqc_k2_host.collect().ifEmpty([]),
                 ch_multiqc_sylph.collect().ifEmpty([]),
