@@ -121,6 +121,7 @@ workflow {
      BBDuk Adapt  : ${params.run_bbduk ? (params.bbduk_adapters ?: 'not set') : 'N/A'}
      Run Spike-in : ${params.run_spike_in}
      Spike-in Idx : ${params.run_spike_in ? (params.spike_in_bt2 ?: 'not set') : 'N/A'}
+     SLURM Acct   : ${params.slurm_account ?: 'not set'}
      Run Taxonomy : ${params.run_taxonomy}
      Run Host     : ${params.run_host_profiling}
      Run AMR      : ${params.run_amr}

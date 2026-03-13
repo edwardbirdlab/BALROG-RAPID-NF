@@ -12,6 +12,7 @@ module load nextflow/23.10.1
 
 nextflow run nextflow/main.nf \
     -c nextflow/configs/ceres/ceres.cfg \
+    --slurm_account your_group \
     --sample_sheet samplesheet.csv \
     --kraken2_db /path/to/kraken2_db \
     --sylph_db /path/to/sylph.syldb \
