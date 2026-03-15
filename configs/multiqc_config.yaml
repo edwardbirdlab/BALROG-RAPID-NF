@@ -18,6 +18,7 @@ run_modules:
   - bowtie2
   - kraken
   - sylphtax
+  - nonpareil
   - custom_content
 
 # Use default search patterns for all modules.
@@ -64,6 +65,11 @@ module_order:
       anchor: "sylph_profiling"
       path_filters:
         - "sylph/*.sylphmpa"
+  - nonpareil:
+      name: "Nonpareil (Coverage Estimation)"
+      anchor: "nonpareil_coverage"
+      path_filters:
+        - "nonpareil/*.json"
 
 # Clean up sample names (strip common suffixes for cleaner tables)
 extra_fn_clean_exts:
@@ -81,6 +87,7 @@ extra_fn_clean_exts:
   - "_amrfinder_generalstats_mqc"
   - "_amrfinder_classes_mqc"
   - "_amrfinder_detail_mqc"
+  - "_nonpareil"
 
 # General stats table: show key columns
 table_columns_visible:

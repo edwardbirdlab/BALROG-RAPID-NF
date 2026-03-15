@@ -13,6 +13,7 @@ process MULTIQC {
         path('kraken2_host/*')
         path('sylph/*')
         path('amrfinder_summary/*')
+        path('nonpareil/*')
         path(multiqc_config)
         path(software_versions)
 

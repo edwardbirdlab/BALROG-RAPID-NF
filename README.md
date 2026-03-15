@@ -40,13 +40,14 @@ Raw FASTQ
   │
   ├─ 1b. [optional] Spike-in Removal (Bowtie2 vs T. thermophilus)
   │
-  ├─ 2. Taxonomy (Kraken2 + Sylph)        ─┐
-  ├─ 3. Host Profiling (Kraken2 x N hosts)  ├─ run in parallel
-  └─ 4. AMR Detection                      ─┘
-         Diamond BLASTX → seqtk subseq → SPAdes micro-assembly → AMRFinder
+  ├─ 2. Taxonomy (Kraken2 + Sylph)           ─┐
+  ├─ 3. Host Profiling (Kraken2 x N hosts)    │
+  ├─ 4. AMR Detection                         ├─ run in parallel
+  │      Diamond BLASTX → seqtk → SPAdes → AMRFinder │
+  └─ 5. [optional] Nonpareil Coverage        ─┘
   │
-  ├─ 5. Software Versions (collected from all steps)
-  └─ 6. MultiQC (aggregated QC report)
+  ├─ 6. Software Versions (collected from all steps)
+  └─ 7. MultiQC (aggregated QC report)
 ```
 
 ## Host Profiling (Optional)
@@ -93,7 +94,9 @@ nextflow run nextflow/main.nf \
   ...
 ```
 
-A pre-built Bowtie2 index for T. thermophilus HB8 is bundled in the pipeline at `assets/t_thermophilus_bt2/`. The step runs **after QC but before taxonomy, host profiling, and AMR detection**, so all downstream analyses use spike-depleted reads.
+A pre-built Bowtie2 index for T. thermophilus is bundled in the pipeline at `assets/t_thermophilus_bt2/`. The step runs **after QC but before taxonomy, host profiling, and AMR detection**, so all downstream analyses use spike-depleted reads.
+
+Reads are aligned with Bowtie2 and piped directly through samtools to extract unmapped pairs — any read pair where **either mate** maps to the spike-in genome is removed. This is more thorough than concordant-only filtering and avoids writing large intermediate SAM files to disk.
 
 Spike-in alignment statistics appear in the MultiQC report and per-sample stats TSV files are published to `results/spike_in/`.
 
@@ -102,6 +105,19 @@ To use a custom spike-in reference, build a Bowtie2 index and pass the directory
 ```bash
 --spike_in_bt2 /path/to/custom_bt2_index/
 ```
+
+## Nonpareil Coverage Estimation (Optional)
+
+Nonpareil estimates metagenomic sequencing coverage by analyzing read redundancy — it answers "have we sequenced enough?" for each sample.
+
+```bash
+nextflow run nextflow/main.nf \
+  --sample_sheet samplesheet.csv \
+  --run_nonpareil \
+  ...
+```
+
+Nonpareil runs on R1 reads only (one read per pair) using the kmer algorithm. It runs **in parallel** with taxonomy, host profiling, and AMR detection. Coverage estimates appear in the MultiQC report and raw output files are published to `results/nonpareil/`.
 
 ## Parameters
 
@@ -127,6 +143,7 @@ To use a custom spike-in reference, build a Bowtie2 index and pass the directory
 | `--bbduk_additional_args` | `''` | Extra bbduk.sh arguments |
 | `--run_spike_in` | false | Enable T. thermophilus spike-in removal |
 | `--spike_in_bt2` | bundled | Path to pre-built Bowtie2 index directory |
+| `--run_nonpareil` | false | Enable Nonpareil coverage estimation |
 | `--run_taxonomy` | true | Enable/disable taxonomy profiling |
 | `--run_host_profiling` | true | Enable/disable host profiling |
 | `--run_amr` | true | Enable/disable AMR detection |
@@ -147,6 +164,9 @@ results/
 ├── spike_in/                                      # only when --run_spike_in
 │   ├── {sample}_spike_stats.tsv
 │   └── {sample}_bowtie2_spike.log
+├── nonpareil/                                     # only when --run_nonpareil
+│   ├── {sample}.npo
+│   └── {sample}.npa
 ├── taxonomy/
 │   ├── kraken2/{sample}_k2report.tsv
 │   └── sylph/{sample}_profile.tsv
@@ -180,7 +200,8 @@ All processes run in containers. No local tool installation needed.
 | seqtk | `quay.io/biocontainers/seqtk:1.5--h577a1d6_1` |
 | SPAdes | `ebird013/spades:3.15.5` |
 | AMRFinder | `ncbi/amr:latest` |
-| Bowtie2 (Spike-in) | `biocontainers/bowtie2:v2.4.1_cv1` |
+| Bowtie2 + Samtools (Spike-in) | `quay.io/biocontainers/mulled-v2-...` (Bowtie2 2.4.5 + Samtools 1.16.1) |
+| Nonpareil | `quay.io/biocontainers/nonpareil:3.5.5--r44h077b44d_2` |
 | BBMap (BBDuk) | `ebird013/bbmap:latest` |
 | Sylph-tax | `quay.io/biocontainers/sylph-tax:1.8.0--pyhdfd78af_0` |
 | MultiQC | `quay.io/biocontainers/multiqc:1.33--pyhdfd78af_0` |

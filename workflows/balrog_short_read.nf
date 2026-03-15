@@ -3,14 +3,15 @@
  *
  * Orchestrates all subworkflows:
  *   1. Read QC (FASTP + optional BBDuk + FastQC)
- *   1b. Optional spike-in removal (Bowtie2 vs T. thermophilus)
+ *   1b. Optional spike-in removal (Bowtie2 + samtools vs T. thermophilus)
  *   2. Taxonomy profiling (Kraken2 + Sylph) - parallel
  *   3. Host profiling (Kraken2 x N hosts) - parallel
  *   4. AMR subset detection (Diamond → seqtk → SPAdes → AMRFinder) - parallel
- *   5. Collect software versions from all steps
- *   6. MultiQC aggregation report
+ *   5. Nonpareil coverage estimation (optional) - parallel
+ *   6. Collect software versions from all steps
+ *   7. MultiQC aggregation report
  *
- * Steps 2-4 all run in parallel after QC (and optional spike-in removal) completes.
+ * Steps 2-5 all run in parallel after QC (and optional spike-in removal) completes.
  */
 
 include { READ_QC          } from '../subworkflows/read_qc'
@@ -18,6 +19,7 @@ include { TAXONOMY         } from '../subworkflows/taxonomy'
 include { HOST_PROFILING   } from '../subworkflows/host_profiling'
 include { AMR_SUBSET       } from '../subworkflows/amr_subset'
 include { SPIKE_IN_REMOVAL      } from '../modules/spike_in_removal'
+include { NONPAREIL             } from '../modules/nonpareil'
 include { COLLECT_VERSIONS      } from '../modules/collect_versions'
 include { SUMMARIZE_AMRFINDER   } from '../modules/summarize_amrfinder'
 include { MULTIQC               } from '../modules/multiqc'
@@ -49,6 +51,7 @@ workflow BALROG_SHORT_READ {
         ch_multiqc_k2_host     = Channel.empty()
         ch_multiqc_sylph       = Channel.empty()
         ch_multiqc_amrfinder   = Channel.empty()
+        ch_multiqc_nonpareil   = Channel.empty()
 
         // Step 1: Quality control and trimming
         if (params.run_qc) {
@@ -66,6 +69,8 @@ workflow BALROG_SHORT_READ {
         }
 
         // Step 1b: Spike-in removal (optional, after QC, before downstream analysis)
+        //   Bowtie2 alignment to T. thermophilus piped through samtools to
+        //   extract unmapped pairs (both mates unmapped) — no intermediate SAM on disk
         if (params.run_spike_in) {
             SPIKE_IN_REMOVAL(ch_reads, ch_spike_in_bt2)
             ch_reads    = SPIKE_IN_REMOVAL.out.cleaned_reads
@@ -105,10 +110,17 @@ workflow BALROG_SHORT_READ {
                 .mix(SUMMARIZE_AMRFINDER.out.detail)
         }
 
-        // Step 5: Combine all software versions
+        // Step 5: Nonpareil coverage estimation (runs in parallel with 2-4)
+        if (params.run_nonpareil) {
+            NONPAREIL(ch_reads)
+            ch_versions = ch_versions.mix(NONPAREIL.out.versions)
+            ch_multiqc_nonpareil = NONPAREIL.out.json
+        }
+
+        // Step 6: Combine all software versions
         COLLECT_VERSIONS(ch_versions.collect())
 
-        // Step 6: MultiQC aggregation report
+        // Step 7: MultiQC aggregation report
         if (params.run_multiqc) {
             ch_multiqc_config = Channel.fromPath(params.multiqc_config, checkIfExists: true)
 
@@ -122,6 +134,7 @@ workflow BALROG_SHORT_READ {
                 ch_multiqc_k2_host.collect().ifEmpty([]),
                 ch_multiqc_sylph.collect().ifEmpty([]),
                 ch_multiqc_amrfinder.collect().ifEmpty([]),
+                ch_multiqc_nonpareil.collect().ifEmpty([]),
                 ch_multiqc_config.first(),
                 COLLECT_VERSIONS.out.combined_versions
             )
