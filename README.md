@@ -41,10 +41,12 @@ Raw FASTQ
   ├─ 1b. [optional] Spike-in Removal (Bowtie2 vs T. thermophilus)
   │
   ├─ 2. Taxonomy (Kraken2 + Sylph)           ─┐
-  ├─ 3. Host Profiling (Kraken2 x N hosts)    │
-  ├─ 4. AMR Detection                         ├─ run in parallel
-  │      Diamond BLASTX → seqtk → SPAdes → AMRFinder │
-  └─ 5. [optional] Nonpareil Coverage        ─┘
+  ├─ 3. Host Profiling (Kraken2 x N hosts)    ├─ run in parallel
+  ├─ 4. AMR Detection                         │
+  │      Diamond BLASTX → seqtk → SPAdes → AMRFinder ─┘
+  └─ 5. [optional] Nonpareil Coverage
+         When taxonomy enabled: bacterial read extraction (after step 2) → Nonpareil
+         When taxonomy disabled: runs on full reads (parallel with 2-4)
   │
   ├─ 6. Software Versions (collected from all steps)
   └─ 7. MultiQC (aggregated QC report)
@@ -117,7 +119,11 @@ nextflow run nextflow/main.nf \
   ...
 ```
 
-Nonpareil runs on R1 reads only (one read per pair) using the kmer algorithm. It runs **in parallel** with taxonomy, host profiling, and AMR detection. Coverage estimates appear in the MultiQC report and raw output files are published to `results/nonpareil/`.
+**Bacterial read filtering**: When taxonomy profiling is also enabled (`--run_taxonomy`, default true), Nonpareil automatically runs on **bacterial reads only**. Kraken2 output is used to extract reads classified under Bacteria (taxid 2, including all children) via KrakenTools. This removes host contamination signal that would otherwise bias coverage estimates. Extraction statistics are published to `results/nonpareil/bacterial_extraction/`.
+
+When taxonomy is disabled, Nonpareil runs on the full read set.
+
+Nonpareil runs on R1 reads only (one read per pair) using the kmer algorithm. Coverage estimates appear in the MultiQC report and raw output files are published to `results/nonpareil/`.
 
 ## Parameters
 
@@ -166,7 +172,9 @@ results/
 │   └── {sample}_bowtie2_spike.log
 ├── nonpareil/                                     # only when --run_nonpareil
 │   ├── {sample}.npo
-│   └── {sample}.npa
+│   ├── {sample}.npa
+│   └── bacterial_extraction/                      # only when taxonomy + nonpareil both enabled
+│       └── {sample}_bacterial_extraction_stats.tsv
 ├── taxonomy/
 │   ├── kraken2/{sample}_k2report.tsv
 │   └── sylph/{sample}_profile.tsv
@@ -201,6 +209,7 @@ All processes run in containers. No local tool installation needed.
 | SPAdes | `ebird013/spades:3.15.5` |
 | AMRFinder | `ncbi/amr:latest` |
 | Bowtie2 + Samtools (Spike-in) | `quay.io/biocontainers/mulled-v2-...` (Bowtie2 2.4.5 + Samtools 1.16.1) |
+| KrakenTools | `quay.io/biocontainers/krakentools:1.2.1--pyh7e72e81_0` |
 | Nonpareil | `quay.io/biocontainers/nonpareil:3.5.5--r44h077b44d_2` |
 | BBMap (BBDuk) | `ebird013/bbmap:latest` |
 | Sylph-tax | `quay.io/biocontainers/sylph-tax:1.8.0--pyhdfd78af_0` |
