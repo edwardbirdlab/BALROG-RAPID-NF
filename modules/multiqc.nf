@@ -14,6 +14,7 @@ process MULTIQC {
         path('sylph/*')
         path('amrfinder_summary/*')
         path('nonpareil/*')
+        path('custom_qc/*')
         path(multiqc_config)
         path(software_versions)
 

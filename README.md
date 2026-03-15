@@ -125,6 +125,19 @@ When taxonomy is disabled, Nonpareil runs on the full read set.
 
 Nonpareil runs on R1 reads only (one read per pair) using the kmer algorithm. Coverage estimates appear in the MultiQC report and raw output files are published to `results/nonpareil/`.
 
+## Custom QC Metrics (Optional)
+
+Adds custom metrics to the MultiQC General Stats table. Currently reports the **percentage of reads classified as Bacteria** by Kraken2 — useful for quickly assessing host contamination levels across samples.
+
+```bash
+nextflow run nextflow/main.nf \
+  --sample_sheet samplesheet.csv \
+  --custom_qc \
+  ...
+```
+
+Requires taxonomy profiling to be enabled (`--run_taxonomy`, default true). The "% Bacterial" column appears in the MultiQC General Stats table.
+
 ## Parameters
 
 | Parameter | Default | Description |
@@ -150,6 +163,7 @@ Nonpareil runs on R1 reads only (one read per pair) using the kmer algorithm. Co
 | `--run_spike_in` | false | Enable T. thermophilus spike-in removal |
 | `--spike_in_bt2` | bundled | Path to pre-built Bowtie2 index directory |
 | `--run_nonpareil` | false | Enable Nonpareil coverage estimation |
+| `--custom_qc` | false | Enable custom QC metrics (% bacterial reads) |
 | `--run_taxonomy` | true | Enable/disable taxonomy profiling |
 | `--run_host_profiling` | true | Enable/disable host profiling |
 | `--run_amr` | true | Enable/disable AMR detection |

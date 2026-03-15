@@ -88,6 +88,7 @@ extra_fn_clean_exts:
   - "_amrfinder_classes_mqc"
   - "_amrfinder_detail_mqc"
   - "_nonpareil"
+  - "_kraken2_qc_mqc"
 
 # General stats table: show key columns
 table_columns_visible:

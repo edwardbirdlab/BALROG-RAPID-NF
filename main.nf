@@ -126,6 +126,7 @@ workflow {
      Run Host     : ${params.run_host_profiling}
      Run AMR      : ${params.run_amr}
      Run Nonpar.  : ${params.run_nonpareil}
+     Custom QC    : ${params.custom_qc}
      Run MultiQC  : ${params.run_multiqc}
     ======================================
     """.stripIndent()

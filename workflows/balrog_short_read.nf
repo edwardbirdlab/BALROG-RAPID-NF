@@ -25,6 +25,7 @@ include { EXTRACT_BACTERIAL_READS } from '../modules/extract_bacterial_reads'
 include { NONPAREIL               } from '../modules/nonpareil'
 include { COLLECT_VERSIONS      } from '../modules/collect_versions'
 include { SUMMARIZE_AMRFINDER   } from '../modules/summarize_amrfinder'
+include { SUMMARIZE_KRAKEN2_QC } from '../modules/summarize_kraken2_qc'
 include { MULTIQC               } from '../modules/multiqc'
 
 
@@ -55,6 +56,7 @@ workflow BALROG_SHORT_READ {
         ch_multiqc_sylph       = Channel.empty()
         ch_multiqc_amrfinder   = Channel.empty()
         ch_multiqc_nonpareil   = Channel.empty()
+        ch_multiqc_custom_qc   = Channel.empty()
 
         // Step 1: Quality control and trimming
         if (params.run_qc) {
@@ -89,6 +91,13 @@ workflow BALROG_SHORT_READ {
             // Extract file paths from tuples for MultiQC
             ch_multiqc_k2_taxonomy = TAXONOMY.out.kraken2_report.map { it[-1] }
             ch_multiqc_sylph       = TAXONOMY.out.sylph_tax_mpa
+
+            // Custom QC: bacterial read percentage for MultiQC General Stats
+            if (params.custom_qc) {
+                SUMMARIZE_KRAKEN2_QC(TAXONOMY.out.kraken2_report)
+                ch_versions = ch_versions.mix(SUMMARIZE_KRAKEN2_QC.out.versions)
+                ch_multiqc_custom_qc = SUMMARIZE_KRAKEN2_QC.out.generalstats
+            }
         }
 
         // Step 3: Host profiling (runs in parallel with 2 & 4)
@@ -160,6 +169,7 @@ workflow BALROG_SHORT_READ {
                 ch_multiqc_sylph.collect().ifEmpty([]),
                 ch_multiqc_amrfinder.collect().ifEmpty([]),
                 ch_multiqc_nonpareil.collect().ifEmpty([]),
+                ch_multiqc_custom_qc.collect().ifEmpty([]),
                 ch_multiqc_config.first(),
                 COLLECT_VERSIONS.out.combined_versions
             )
