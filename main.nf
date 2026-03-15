@@ -54,6 +54,10 @@ if (params.run_spike_in && !params.spike_in_bt2) {
     error "ERROR: --spike_in_bt2 is required when spike-in removal is enabled (--run_spike_in)"
 }
 
+if (params.custom_qc && !params.run_taxonomy) {
+    log.warn "WARNING: --custom_qc has no effect without --run_taxonomy enabled"
+}
+
 
 // -------------------------------------------------------------------
 // Channel setup
