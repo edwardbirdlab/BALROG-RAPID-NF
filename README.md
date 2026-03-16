@@ -1,6 +1,6 @@
 # BALROG-RAPID Nextflow Pipeline
 
-Nextflow DSL2 pipeline for metagenomic pathogen detection, host profiling, and AMR detection. 
+Nextflow DSL2 pipeline for metagenomic pathogen detection, host profiling, and AMR detection. This pipeline was developed with the intention of producing rapid results, formatted for downstream visualization with the BALROG-RAPID-DASHBOARD package (link).
 
 ## Requirements
 
