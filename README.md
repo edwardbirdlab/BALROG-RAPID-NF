@@ -1,6 +1,6 @@
 # BALROG-RAPID Nextflow Pipeline
 
-Nextflow DSL2 pipeline for metagenomic pathogen detection, host profiling, and AMR detection. This is Phase 1 of the BALROG-RAPID system — outputs feed into the Phase 2 risk map dashboard.
+Nextflow DSL2 pipeline for metagenomic pathogen detection, host profiling, and AMR detection. 
 
 ## Requirements
 
@@ -32,25 +32,7 @@ A separate metadata CSV (sample, site, coordinates, etc.) is used by Phase 2 and
 
 ## Pipeline Steps
 
-```
-Raw FASTQ
-  │
-  ├─ 1. Read QC
-  │     FASTP → [optional BBDuk] → FastQC
-  │
-  ├─ 1b. [optional] Spike-in Removal (Bowtie2 vs T. thermophilus)
-  │
-  ├─ 2. Taxonomy (Kraken2 + Sylph)           ─┐
-  ├─ 3. Host Profiling (Kraken2 x N hosts)    ├─ run in parallel
-  ├─ 4. AMR Detection                         │
-  │      Diamond BLASTX → seqtk → SPAdes → AMRFinder ─┘
-  └─ 5. [optional] Nonpareil Coverage
-         When taxonomy enabled: bacterial read extraction (after step 2) → Nonpareil
-         When taxonomy disabled: runs on full reads (parallel with 2-4)
-  │
-  ├─ 6. Software Versions (collected from all steps)
-  └─ 7. MultiQC (aggregated QC report)
-```
+Add pipeline flowchart here
 
 ## Host Profiling (Optional)
 
@@ -66,11 +48,11 @@ human,/path/to/kraken2_human_db
 chicken,/path/to/kraken2_chicken_db
 ```
 
-Each sample is classified against every host database. This is for contamination reporting only — reads are **not** filtered.
+Each sample is classified against every host database. This is for contamination reporting only; meaning reads are **not** filtered. This is meant as a QC step to see host contamination.
 
 ## Element Biosciences Aviti Adapter Trimming (Optional)
 
-When sequencing on an Element Biosciences Aviti instrument, reads may contain platform-specific adapter sequences that FASTP doesn't fully remove. Enable the optional BBDuk trimming step to clean these:
+When sequencing on an Element Biosciences Aviti instrument, reads may contain platform-specific sequencing artifacts. Enable the optional BBDuk trimming step to clean these:
 
 ```bash
 nextflow run nextflow/main.nf \
@@ -79,15 +61,13 @@ nextflow run nextflow/main.nf \
   ...
 ```
 
-BBDuk runs **after FASTP but before FastQC (Trimmed)**, so the final QC reflects fully cleaned reads. The adapter FASTA defaults to the Element Aviti concatenated adapter file and does not need to be specified unless you have a custom one.
+BBDuk runs **after FASTP, but before FastQC (Trimmed)**, so the final QC reflects fully cleaned reads. The adapter FASTA defaults to the Element Aviti concatenated adapter file and does not need to be specified unless you have a custom one.
 
-BBDuk trimming stats appear automatically in the MultiQC report when enabled.
-
-The adapter FASTA is bundled in the pipeline at `assets/element_aviti_adapters.fasta` and does not require internet access at runtime.
+The adapter FASTA is bundled in the pipeline at `assets/element_aviti_adapters.fasta` .
 
 ## T. thermophilus Spike-in Removal (Optional)
 
-When T. thermophilus is used as a spike-in control, enable Bowtie2 alignment to remove spike-in reads before downstream analysis:
+When T. thermophilus is used as a spike-in control, enable Bowtie2/Samtools to remove spike-in reads before downstream analysis:
 
 ```bash
 nextflow run nextflow/main.nf \
@@ -98,10 +78,6 @@ nextflow run nextflow/main.nf \
 
 A pre-built Bowtie2 index for T. thermophilus is bundled in the pipeline at `assets/t_thermophilus_bt2/`. The step runs **after QC but before taxonomy, host profiling, and AMR detection**, so all downstream analyses use spike-depleted reads.
 
-Reads are aligned with Bowtie2 and piped directly through samtools to extract unmapped pairs — any read pair where **either mate** maps to the spike-in genome is removed. This is more thorough than concordant-only filtering and avoids writing large intermediate SAM files to disk.
-
-Spike-in alignment statistics appear in the MultiQC report and per-sample stats TSV files are published to `results/spike_in/`.
-
 To use a custom spike-in reference, build a Bowtie2 index and pass the directory:
 
 ```bash
@@ -110,7 +86,7 @@ To use a custom spike-in reference, build a Bowtie2 index and pass the directory
 
 ## Nonpareil Coverage Estimation (Optional)
 
-Nonpareil estimates metagenomic sequencing coverage by analyzing read redundancy — it answers "have we sequenced enough?" for each sample.
+Nonpareil estimates metagenomic sequencing coverage by analyzing read redundancy.
 
 ```bash
 nextflow run nextflow/main.nf \
@@ -119,15 +95,15 @@ nextflow run nextflow/main.nf \
   ...
 ```
 
-**Bacterial read filtering**: When taxonomy profiling is also enabled (`--run_taxonomy`, default true), Nonpareil automatically runs on **bacterial reads only**. Kraken2 output is used to extract reads classified under Bacteria (taxid 2, including all children) via KrakenTools. This removes host contamination signal that would otherwise bias coverage estimates. Extraction statistics are published to `results/nonpareil/bacterial_extraction/`.
+**Bacterial read filtering**: When taxonomy profiling is also enabled (`--run_taxonomy`, default true), Nonpareil automatically runs on **bacterial reads only**. Kraken2 output is used to extract reads classified under Bacteria (taxid 2, including all children) via KrakenTools. This removes the host contamination signal that would otherwise bias coverage estimates. Extraction statistics are published to `results/nonpareil/bacterial_extraction/`.
 
-When taxonomy is disabled, Nonpareil runs on the full read set.
+When taxonomy is disabled, Nonpareil runs on the full read set (not recommended unless there is very little host contamination).
 
 Nonpareil runs on R1 reads only (one read per pair) using the kmer algorithm. Coverage estimates appear in the MultiQC report and raw output files are published to `results/nonpareil/`.
 
 ## Custom QC Metrics (Optional)
 
-Adds custom metrics to the MultiQC General Stats table. Currently reports the **percentage of reads classified as Bacteria** by Kraken2 — useful for quickly assessing host contamination levels across samples.
+Adds custom metrics to the MultiQC General Stats table. Currently reports the **percentage of reads classified as Bacteria** by Kraken2, may include normalized T. thermophilus normalized results in the future.
 
 ```bash
 nextflow run nextflow/main.nf \
@@ -135,8 +111,6 @@ nextflow run nextflow/main.nf \
   --custom_qc \
   ...
 ```
-
-Requires taxonomy profiling to be enabled (`--run_taxonomy`, default true). The "% Bacterial" column appears in the MultiQC General Stats table.
 
 ## Parameters
 
@@ -222,7 +196,7 @@ All processes run in containers. No local tool installation needed.
 | seqtk | `quay.io/biocontainers/seqtk:1.5--h577a1d6_1` |
 | SPAdes | `ebird013/spades:3.15.5` |
 | AMRFinder | `ncbi/amr:latest` |
-| Bowtie2 + Samtools (Spike-in) | `quay.io/biocontainers/mulled-v2-...` (Bowtie2 2.4.5 + Samtools 1.16.1) |
+| Bowtie2 + Samtools (Spike-in) | `quay.io/biocontainers/mulled-v2-229691629e0b12c862d76101f90a597d5c1c81d4:484c804e1d5952c9023891b6f9a19f7f15815145-0` (Bowtie2 2.4.5 + Samtools 1.16.1) |
 | KrakenTools | `quay.io/biocontainers/krakentools:1.2.1--pyh7e72e81_0` |
 | Nonpareil | `quay.io/biocontainers/nonpareil:3.5.5--r44h077b44d_2` |
 | BBMap (BBDuk) | `ebird013/bbmap:latest` |
