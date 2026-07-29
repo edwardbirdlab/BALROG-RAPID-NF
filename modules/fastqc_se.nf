@@ -15,7 +15,7 @@ process FASTQC_SE {
     """
     mkdir ${sample}_fastqc
     ln -s ${reads} ${sample}.fastq.gz
-    fastqc -o ${sample}_fastqc -t ${task.cpus} --memory ${task.memory.toMega()} ${sample}.fastq.gz 
+    fastqc -o ${sample}_fastqc -t ${task.cpus} --memory ${Math.min(task.memory.toMega(), 10000)} ${sample}.fastq.gz
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
