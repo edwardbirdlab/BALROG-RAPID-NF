@@ -1,10 +1,10 @@
-process FASTQC {
+process FASTQC_SE {
 
     label 'ultralow'
     container 'quay.io/biocontainers/fastqc:0.12.1--hdfd78af_0'
 
     input:
-        tuple val(sample), path(r1), path(r2)
+        tuple val(sample), path(reads)
 
     output:
         tuple val(sample), path("${sample}_fastqc"), emit: reports
@@ -14,9 +14,8 @@ process FASTQC {
     script:
     """
     mkdir ${sample}_fastqc
-    ln -s ${r1} ${sample}_R1.fastq.gz
-    ln -s ${r2} ${sample}_R2.fastq.gz
-    fastqc -o ${sample}_fastqc -t ${task.cpus} --memory ${task.memory.toMega()} ${sample}_R1.fastq.gz ${sample}_R2.fastq.gz
+    ln -s ${reads} ${sample}.fastq.gz
+    fastqc -o ${sample}_fastqc -t ${task.cpus} --memory ${task.memory.toMega()} ${sample}.fastq.gz 
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

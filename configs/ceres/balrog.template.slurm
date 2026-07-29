@@ -8,10 +8,12 @@
 #SBATCH --mail-type=START,END,FAIL
 
 module load apptainer
-module load nextflow/23.10.1
+# Requires Nextflow >=24.04 (process.resourceLimits directive).
+# Run `module avail nextflow` and pick the newest >=24.04 build available on Ceres.
+module load nextflow/24.10.4
 
-nextflow run nextflow/main.nf \
-    -c nextflow/configs/ceres/ceres.cfg \
+nextflow run main.nf \
+    -c configs/ceres/ceres.cfg \
     --slurm_account your_group \
     --sample_sheet samplesheet.csv \
     --kraken2_db /path/to/kraken2_db \

@@ -10,10 +10,9 @@
  *   5. Nonpareil coverage estimation (optional)
  *      - When taxonomy enabled: bacterial read extraction → Nonpareil (after step 2)
  *      - When taxonomy disabled: runs on full reads (parallel with 2-4)
- *   6. Collect software versions from all steps
- *   7. MultiQC aggregation report
  *
  * Steps 2-4 run in parallel. Step 5 runs after step 2 when taxonomy is enabled.
+ * COLLECT_VERSIONS and MULTIQC are handled in main.nf for unified reporting.
  */
 
 include { READ_QC          } from '../subworkflows/read_qc'
@@ -23,10 +22,9 @@ include { AMR_SUBSET       } from '../subworkflows/amr_subset'
 include { SPIKE_IN_REMOVAL         } from '../modules/spike_in_removal'
 include { EXTRACT_BACTERIAL_READS } from '../modules/extract_bacterial_reads'
 include { NONPAREIL               } from '../modules/nonpareil'
-include { COLLECT_VERSIONS      } from '../modules/collect_versions'
 include { SUMMARIZE_AMRFINDER   } from '../modules/summarize_amrfinder'
 include { SUMMARIZE_KRAKEN2_QC } from '../modules/summarize_kraken2_qc'
-include { MULTIQC               } from '../modules/multiqc'
+include { SNP_PROFILING        } from '../subworkflows/snp_profiling'
 
 
 workflow BALROG_SHORT_READ {
@@ -38,8 +36,10 @@ workflow BALROG_SHORT_READ {
         ch_diamond_db     // path to Diamond AMR database
         ch_host_dbs       // tuple(host_name, path_to_db) - can be empty channel
         ch_sylph_tax_db   // path to pre-downloaded sylph-tax taxonomy DB directory
-        ch_bbduk_adapters // path to adapter FASTA for BBDuk (value channel)
-        ch_spike_in_bt2   // path to pre-built Bowtie2 index directory (value channel)
+        ch_bbduk_adapters  // path to adapter FASTA for BBDuk (value channel)
+        ch_spike_in_bt2    // path to pre-built Bowtie2 index directory (value channel)
+        ch_snp_cds_fasta   // path to CDS FASTA for SNP profiling (value channel)
+        ch_snp_positions_csv // path to positions CSV for SNP profiling (value channel)
 
     main:
         // Collect all versions.yml files from every process
@@ -57,6 +57,7 @@ workflow BALROG_SHORT_READ {
         ch_multiqc_amrfinder   = Channel.empty()
         ch_multiqc_nonpareil   = Channel.empty()
         ch_multiqc_custom_qc   = Channel.empty()
+        ch_multiqc_snp         = Channel.empty()
 
         // Step 1: Quality control and trimming
         if (params.run_qc) {
@@ -151,27 +152,25 @@ workflow BALROG_SHORT_READ {
             ch_multiqc_nonpareil = NONPAREIL.out.json
         }
 
-        // Step 6: Combine all software versions
-        COLLECT_VERSIONS(ch_versions.collect())
-
-        // Step 7: MultiQC aggregation report
-        if (params.run_multiqc) {
-            ch_multiqc_config = Channel.fromPath(params.multiqc_config, checkIfExists: true)
-
-            MULTIQC(
-                ch_multiqc_fastqc_raw.collect().ifEmpty([]),
-                ch_multiqc_fastp.collect().ifEmpty([]),
-                ch_multiqc_bbduk.collect().ifEmpty([]),
-                ch_multiqc_fastqc_trim.collect().ifEmpty([]),
-                ch_multiqc_spike_in.collect().ifEmpty([]),
-                ch_multiqc_k2_taxonomy.collect().ifEmpty([]),
-                ch_multiqc_k2_host.collect().ifEmpty([]),
-                ch_multiqc_sylph.collect().ifEmpty([]),
-                ch_multiqc_amrfinder.collect().ifEmpty([]),
-                ch_multiqc_nonpareil.collect().ifEmpty([]),
-                ch_multiqc_custom_qc.collect().ifEmpty([]),
-                ch_multiqc_config.first(),
-                COLLECT_VERSIONS.out.combined_versions
-            )
+        // Step 6: Targeted SNP/AA variant profiling (runs in parallel with 2-4)
+        if (params.run_snp_profiling) {
+            SNP_PROFILING(ch_reads, ch_snp_cds_fasta, ch_snp_positions_csv)
+            ch_versions = ch_versions.mix(SNP_PROFILING.out.versions)
+            ch_multiqc_snp = SNP_PROFILING.out.multiqc_snp
         }
+
+    emit:
+        versions             = ch_versions
+        multiqc_fastqc_raw   = ch_multiqc_fastqc_raw
+        multiqc_fastp        = ch_multiqc_fastp
+        multiqc_bbduk        = ch_multiqc_bbduk
+        multiqc_fastqc_trim  = ch_multiqc_fastqc_trim
+        multiqc_spike_in     = ch_multiqc_spike_in
+        multiqc_k2_taxonomy  = ch_multiqc_k2_taxonomy
+        multiqc_k2_host      = ch_multiqc_k2_host
+        multiqc_sylph        = ch_multiqc_sylph
+        multiqc_amrfinder    = ch_multiqc_amrfinder
+        multiqc_nonpareil    = ch_multiqc_nonpareil
+        multiqc_custom_qc    = ch_multiqc_custom_qc
+        multiqc_snp          = ch_multiqc_snp
 }

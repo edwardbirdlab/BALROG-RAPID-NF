@@ -1,7 +1,7 @@
 process AMRFINDER {
 
     label 'amrfinder'
-    container 'ncbi/amr:latest'
+    container 'ncbi/amr:4.2.7-2026-05-15.1'
 
     input:
         tuple val(sample), path(contigs)

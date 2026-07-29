@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main, pre-release]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nextflow
+        uses: nf-core/setup-nextflow@v2
+        with:
+          version: "24.10.4"
+
+      - name: Config resolves (docker profile)
+        run: nextflow config -profile docker .
+
+      - name: Config resolves (singularity profile)
+        run: nextflow config -profile singularity .
+
+      - name: Config resolves (apptainer profile)
+        run: nextflow config -profile apptainer .
+
+      - name: Script + DAG compile (no real data needed)
+        # main.nf validates --sample_sheet before launching any process, so this
+        # exercises full script compilation (main.nf + every workflow/subworkflow/
+        # module include) without needing containers or reference databases.
+        # It must fail with OUR validation message, not a compile error.
+        run: |
+          set +e
+          OUT=$(nextflow run main.nf -profile docker 2>&1)
+          STATUS=$?
+          echo "$OUT"
+          if echo "$OUT" | grep -q -- "--sample_sheet is required"; then
+            echo "Script compiled and reached parameter validation as expected."
+            exit 0
+          else
+            echo "Pipeline did not fail with the expected validation message -- compilation may be broken."
+            exit 1
+          fi

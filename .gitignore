@@ -2,3 +2,13 @@
 
 .DS_Store
 configs/.DS_Store
+
+# Nextflow runtime artifacts
+work/
+.nextflow/
+.nextflow.log*
+results/
+*.dag.dot
+
+# Raw screen recordings (source footage for assets/*.gif, *.png — not tracked)
+*.mov

@@ -9,7 +9,7 @@
 process BBDUK {
 
     label 'lowmem'
-    container 'ebird013/bbmap:latest'
+    container 'quay.io/biocontainers/bbmap:39.91--h09cc210_0'
 
     input:
         tuple val(sample), path(r1), path(r2)

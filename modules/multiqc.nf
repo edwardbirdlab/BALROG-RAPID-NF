@@ -15,6 +15,10 @@ process MULTIQC {
         path('amrfinder_summary/*')
         path('nonpareil/*')
         path('custom_qc/*')
+        path('nanoplot/*')
+        path('porechop/*')
+        path('filtlong/*')
+        path('snp_profiling/*')
         path(multiqc_config)
         path(software_versions)
 

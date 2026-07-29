@@ -4,7 +4,7 @@
 
 ```bash
 # From the BALROG-RAPID root directory
-cp nextflow/configs/ceres/balrog.template.slurm balrog.slurm
+cp configs/ceres/balrog.template.slurm balrog.slurm
 vim balrog.slurm      # edit with your email, database paths, and SLURM account
 vim samplesheet.csv   # create samplesheet (columns: sample,r1,r2)
 sbatch balrog.slurm
@@ -15,8 +15,8 @@ sbatch balrog.slurm
 The `--slurm_account` parameter is **required** when using the Ceres config. It specifies the SLURM allocation group for job billing (the `-A` flag). The pipeline will error at job submission if this is not set.
 
 ```bash
-nextflow run nextflow/main.nf \
-    -c nextflow/configs/ceres/ceres.cfg \
+nextflow run main.nf \
+    -c configs/ceres/ceres.cfg \
     --slurm_account your_group \
     --sample_sheet samplesheet.csv \
     ...

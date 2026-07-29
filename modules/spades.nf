@@ -1,7 +1,7 @@
 process SPADES {
 
     label 'spades_subset'
-    container 'ebird013/spades:3.15.5'
+    container 'quay.io/biocontainers/spades:3.15.5--h5fb382e_3'
 
     input:
         tuple val(sample), path(r1), path(r2)

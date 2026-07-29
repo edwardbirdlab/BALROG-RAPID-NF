@@ -1,0 +1,380 @@
+cff-version: 1.2.0
+message: "If you use this pipeline, please cite it as below."
+title: "BALROG-RAPID"
+type: software
+authors:
+  - family-names: Bird
+    given-names: Edward
+license: MIT
+version: 2.0.0
+date-released: 2026-07-28
+repository-code: "https://github.com/edwardbirdlab/BALROG-RAPID-NF"
+abstract: >-
+  A Nextflow DSL2 pipeline for metagenomic pathogen detection, host profiling, antimicrobial
+  resistance (AMR) gene detection, and targeted SNP/amino-acid variant profiling, supporting both
+  Illumina/Element short reads and Oxford Nanopore long reads.
+
+# Citations for every third-party tool the pipeline wraps.
+references:
+  - type: article
+    title: "Nextflow enables reproducible computational workflows"
+    authors:
+      - family-names: "Di Tommaso"
+        given-names: P.
+      - family-names: Chatzou
+        given-names: M.
+      - family-names: Floden
+        given-names: E. W.
+      - family-names: "Prieto Barja"
+        given-names: P.
+      - family-names: Palumbo
+        given-names: E.
+      - family-names: Notredame
+        given-names: C.
+    year: 2017
+    journal: "Nature Biotechnology"
+    volume: "35"
+    start: "316"
+    end: "319"
+    notes: "Workflow engine."
+
+  - type: article
+    title: "Singularity: Scientific containers for mobility of compute"
+    authors:
+      - family-names: Kurtzer
+        given-names: G. M.
+      - family-names: Sochat
+        given-names: V.
+      - family-names: Bauer
+        given-names: M. W.
+    year: 2017
+    journal: "PLoS One"
+    volume: "12"
+    start: "e0177459"
+    notes: "Cited for the singularity/apptainer container-engine profile."
+
+  - type: software
+    title: "FastQC"
+    authors:
+      - family-names: Andrews
+        given-names: S.
+    year: 2010
+    notes: "Read QC (raw + trimmed)."
+
+  - type: article
+    title: "Ultrafast one-pass FASTQ data preprocessing, quality control, and deduplication using fastp"
+    authors:
+      - family-names: Chen
+        given-names: S.
+    year: 2023
+    journal: "iMeta"
+    volume: "2"
+    start: "e107"
+    notes: "Read trimming."
+
+  - type: software
+    title: "BBMap: A Fast, Accurate, Splice-Aware Aligner"
+    authors:
+      - family-names: Bushnell
+        given-names: B.
+    year: 2014
+    url: "https://bbmap.org"
+    repository-code: "https://github.com/bbushnell/BBTools"
+    notes: "BBDuk (part of BBTools) -- Element Biosciences Aviti adapter trimming (--run_bbduk)."
+
+  - type: article
+    title: "Improved metagenomic analysis with Kraken 2"
+    authors:
+      - family-names: Wood
+        given-names: D. E.
+      - family-names: Lu
+        given-names: J.
+      - family-names: Langmead
+        given-names: B.
+    year: 2019
+    journal: "Genome Biology"
+    volume: "20"
+    start: "257"
+    notes: "Taxonomy profiling (unified DB) and host-contamination profiling."
+
+  - type: article
+    title: "Metagenome analysis using the Kraken software suite"
+    authors:
+      - family-names: Lu
+        given-names: J.
+      - family-names: Rincon
+        given-names: N.
+      - family-names: Wood
+        given-names: D. E.
+      - family-names: Breitwieser
+        given-names: F. P.
+      - family-names: Pockrandt
+        given-names: C.
+      - family-names: Langmead
+        given-names: B.
+    year: 2022
+    journal: "Nature Protocols"
+    volume: "17"
+    start: "2815"
+    end: "2839"
+    notes: "KrakenTools (extract_kraken_reads.py) -- bacterial read extraction for Nonpareil. Additional co-authors omitted from the original citation (et al.)."
+
+  - type: article
+    title: "Rapid species-level metagenome profiling and containment estimation with sylph"
+    authors:
+      - family-names: Shaw
+        given-names: J.
+      - family-names: Yu
+        given-names: Y. W.
+    year: 2025
+    journal: "Nature Biotechnology"
+    volume: "43"
+    start: "1348"
+    end: "1359"
+    doi: "10.1038/s41587-024-02412-y"
+    notes: "Genome/species-level abundance profiling (--sylph_db)."
+
+  - type: article
+    title: "Rapid species-level metagenome profiling and containment estimation with sylph"
+    authors:
+      - family-names: Shaw
+        given-names: J.
+      - family-names: Yu
+        given-names: Y. W.
+    year: 2025
+    journal: "Nature Biotechnology"
+    volume: "43"
+    start: "1348"
+    end: "1359"
+    doi: "10.1038/s41587-024-02412-y"
+    notes: "sylph-tax -- converts raw Sylph profiles into taxonomic profiles (.sylphmpa) for MultiQC. Same citation as Sylph (sylph-tax is part of the sylph toolkit)."
+
+  - type: article
+    title: "Sensitive protein alignments at tree-of-life scale using DIAMOND"
+    authors:
+      - family-names: Buchfink
+        given-names: B.
+      - family-names: Reuter
+        given-names: K.
+      - family-names: Drost
+        given-names: H. G.
+    year: 2021
+    journal: "Nature Methods"
+    volume: "18"
+    start: "366"
+    end: "368"
+    doi: "10.1038/s41592-021-01101-x"
+    notes: "BLASTX-equivalent alignment for AMR read subsetting."
+
+  - type: software
+    title: "seqtk"
+    authors:
+      - family-names: Li
+        given-names: H.
+    repository-code: "https://github.com/lh3/seqtk"
+    notes: "Read subsetting (subseq) for AMR micro-assembly input. No dedicated publication -- cited via the GitHub repository."
+
+  - type: article
+    title: "metaSPAdes: a new versatile metagenomic assembler"
+    authors:
+      - family-names: Nurk
+        given-names: S.
+      - family-names: Meleshko
+        given-names: D.
+      - family-names: Korobeynikov
+        given-names: A.
+      - family-names: Pevzner
+        given-names: P. A.
+    year: 2017
+    journal: "Genome Research"
+    volume: "27"
+    issue: "5"
+    start: "824"
+    notes: "Micro-assembly of AMR-subset reads (run with --meta)."
+
+  - type: article
+    title: "AMRFinderPlus and the reference gene catalog facilitate examination of the genomic links among antimicrobial resistance, stress response, and virulence"
+    authors:
+      - family-names: Feldgarden
+        given-names: M.
+      - family-names: Brover
+        given-names: V.
+      - family-names: "Gonzalez-Escalona"
+        given-names: N.
+      - family-names: Frye
+        given-names: J. G.
+      - family-names: Haendiges
+        given-names: J.
+      - family-names: Haft
+        given-names: D. H.
+    year: 2021
+    journal: "Scientific Reports"
+    volume: "11"
+    start: "12728"
+    notes: "AMR gene annotation. Additional co-authors omitted from the original citation (et al.)."
+
+  - type: article
+    title: "Fast gapped-read alignment with Bowtie 2"
+    authors:
+      - family-names: Langmead
+        given-names: B.
+      - family-names: Salzberg
+        given-names: S.
+    year: 2012
+    journal: "Nature Methods"
+    volume: "9"
+    start: "357"
+    end: "359"
+    doi: "10.1038/nmeth.1923"
+    notes: "T. thermophilus spike-in removal (--run_spike_in)."
+
+  - type: article
+    title: "Twelve years of SAMtools and BCFtools"
+    authors:
+      - family-names: Danecek
+        given-names: P.
+      - family-names: Bonfield
+        given-names: J. K.
+      - family-names: Liddle
+        given-names: J.
+      - family-names: Marshall
+        given-names: J.
+      - family-names: Ohan
+        given-names: V.
+      - family-names: Pollard
+        given-names: M. O.
+    year: 2021
+    journal: "GigaScience"
+    volume: "10"
+    start: "giab008"
+    notes: "Used in the spike-in removal pipe (view/sort/fastq). Additional co-authors omitted from the original citation (et al.)."
+
+  - type: article
+    title: "Nonpareil: a redundancy-based approach to assess the level of coverage in metagenomic datasets"
+    authors:
+      - family-names: "Rodriguez-R"
+        given-names: L. M.
+      - family-names: Konstantinidis
+        given-names: K. T.
+    year: 2014
+    journal: "Bioinformatics"
+    volume: "30"
+    issue: "5"
+    start: "629"
+    end: "635"
+    doi: "10.1093/bioinformatics/btt584"
+    notes: "Metagenomic coverage estimation (--run_nonpareil)."
+
+  - type: article
+    title: "MultiQC: summarize analysis results for multiple tools and samples in a single report"
+    authors:
+      - family-names: Ewels
+        given-names: P.
+      - family-names: Magnusson
+        given-names: M.
+      - family-names: Lundin
+        given-names: S.
+      - family-names: "Käller"
+        given-names: M.
+    year: 2016
+    journal: "Bioinformatics"
+    volume: "32"
+    start: "3047"
+    end: "3048"
+    notes: "Aggregated QC report."
+
+  - type: software
+    title: "BWA"
+    authors:
+      - family-names: Li
+        given-names: H.
+    year: 2013
+    notes: >-
+      BWA-MEM alignment for short-read SNP profiling (--run_snp_profiling). Aligning sequence reads,
+      clone sequences and assembly contigs with BWA-MEM, arXiv:1303.3997.
+
+  - type: article
+    title: "Minimap2: pairwise alignment for nucleotide sequences"
+    authors:
+      - family-names: Li
+        given-names: H.
+    year: 2018
+    journal: "Bioinformatics"
+    volume: "34"
+    start: "3094"
+    end: "3100"
+    notes: "Long-read alignment for ONT SNP profiling (--run_snp_profiling)."
+
+  - type: software
+    title: "pysam"
+    authors:
+      - name: "pysam-developers"
+    repository-code: "https://github.com/pysam-developers/pysam"
+    notes: >-
+      Per-read codon extraction for SNP profiling (EXTRACT_CODON_FREQS). Per the pysam project: "pysam
+      has not been published in print. When referring to pysam, please use the GitHub URL
+      https://github.com/pysam-developers/pysam. As pysam is a wrapper around htslib and the samtools
+      package, I suggest citing Li et al. (2009), Bonfield et al. (2021), and/or Danecek et al. (2021),
+      as appropriate." The Danecek et al. (2021) SAMtools/BCFtools reference is already listed above in
+      this file; the Li (2009) SAM format paper and Bonfield (2021) HTSlib paper are not yet added here.
+
+  - type: article
+    title: "Porechop_ABI: discovering unknown adapters in Oxford Nanopore Technology sequencing reads for downstream trimming"
+    authors:
+      - family-names: Bonenfant
+        given-names: Q.
+      - family-names: "Noé"
+        given-names: L.
+      - family-names: Touzet
+        given-names: H.
+    year: 2023
+    journal: "Bioinformatics Advances"
+    volume: "3"
+    issue: "1"
+    start: "vbac085"
+    doi: "10.1093/bioadv/vbac085"
+    notes: "ONT adapter trimming with ab initio adapter discovery."
+
+  - type: software
+    title: "Filtlong"
+    authors:
+      - family-names: Wick
+        given-names: R. R.
+    repository-code: "https://github.com/rrwick/filtlong"
+    notes: >-
+      ONT read length/quality filtering (--filtlong_min_length, --filtlong_keep_percent). No dedicated
+      publication -- cited via the GitHub repository.
+
+  - type: article
+    title: "NanoPack2: population-scale evaluation of long-read sequencing data"
+    authors:
+      - family-names: "De Coster"
+        given-names: W.
+      - family-names: Rademakers
+        given-names: R.
+    year: 2023
+    journal: "Bioinformatics"
+    volume: "39"
+    issue: "5"
+    start: "btad311"
+    doi: "10.1093/bioinformatics/btad311"
+    notes: "ONT QC visualization (NanoPlot; emits NanoStats.txt, parsed by MultiQC's nanostat module)."
+
+  - type: article
+    title: "metaFlye: scalable long-read metagenome assembly using repeat graphs"
+    authors:
+      - family-names: Kolmogorov
+        given-names: M.
+      - family-names: Bickhart
+        given-names: D. M.
+      - family-names: Behsaz
+        given-names: B.
+    year: 2020
+    journal: "Nature Methods"
+    volume: "17"
+    start: "1103"
+    end: "1110"
+    doi: "10.1038/s41592-020-00971-x"
+    notes: >-
+      Long-read metagenomic assembly for ONT AMR-subset reads (run with --meta). Additional co-authors
+      omitted from the original citation (et al.).

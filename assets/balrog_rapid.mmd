@@ -1,0 +1,133 @@
+%%metro title: BALROG-RAPID Pipeline v2.0
+%%metro style: dark
+
+%%metro line: short_gdna | Short gDNA | #4A90D9
+%%metro line: short_cdna | Short cDNA (default) | #2ECC71
+%%metro line: long_gdna | Long gDNA | #E67E22
+%%metro line: long_cdna | Long cDNA | #E74C3C
+
+%%metro grid: preprocessing | 0,0,2
+%%metro grid: short_qc | 1,0
+%%metro grid: long_qc | 1,1
+%%metro grid: taxonomy | 2,0,2
+%%metro grid: amr_short | 2,1
+%%metro grid: amr_long | 2,2
+%%metro grid: snp | 2,3
+%%metro grid: coverage | 2,4
+%%metro grid: reporting | 3,3
+
+graph LR
+
+    subgraph preprocessing [1 - Pre-processing]
+        %%metro exit: right | short_gdna, short_cdna, long_gdna, long_cdna
+        samplesheet[Samplesheet]
+        cat_fastq[cat FASTQ]
+        samplesheet -->|short_gdna, short_cdna, long_gdna, long_cdna| cat_fastq
+    end
+
+    subgraph short_qc [2a - Short-read QC]
+        %%metro entry: left | short_gdna, short_cdna
+        %%metro exit: right | short_gdna, short_cdna
+        fastqc_raw_pe[FastQC]
+        bbduk[BBDuk]
+        fastp[fastp]
+        fastqc_trim_pe[FastQC]
+        spikein[Spike-in Removal]
+        fastqc_raw_pe -->|short_gdna, short_cdna| bbduk
+        bbduk -->|short_gdna, short_cdna| fastp
+        fastp -->|short_gdna, short_cdna| fastqc_trim_pe
+        fastqc_trim_pe -->|short_gdna, short_cdna| spikein
+    end
+
+    subgraph long_qc [2b - Long-read QC]
+        %%metro entry: left | long_gdna, long_cdna
+        %%metro exit: right | long_gdna, long_cdna
+        fastqc_raw_se[FastQC]
+        porechop[Porechop ABI]
+        filtlong[Filtlong]
+        nanoplot[NanoPlot]
+        fastqc_trim_se[FastQC]
+        fastqc_raw_se -->|long_gdna, long_cdna| porechop
+        porechop -->|long_gdna, long_cdna| filtlong
+        filtlong -->|long_gdna, long_cdna| nanoplot
+        nanoplot -->|long_gdna, long_cdna| fastqc_trim_se
+    end
+
+    subgraph taxonomy [3 - Taxonomy]
+        %%metro entry: left | short_gdna, short_cdna, long_gdna, long_cdna
+        %%metro exit: right | short_gdna, short_cdna, long_gdna, long_cdna
+        kraken2[Kraken2]
+        sylph[Sylph]
+        sylph_tax[Sylph-tax]
+        sylph -->|short_gdna, short_cdna, long_gdna, long_cdna| sylph_tax
+    end
+
+    subgraph amr_short [4a - AMR Short-read]
+        %%metro entry: left | short_gdna, short_cdna
+        %%metro exit: right | short_gdna, short_cdna
+        diamond_pe[Diamond BLASTX]
+        seqtk_pe[seqtk subseq]
+        spades[SPAdes]
+        amrfinder_pe[AMRFinder]
+        diamond_pe -->|short_gdna, short_cdna| seqtk_pe
+        seqtk_pe -->|short_gdna, short_cdna| spades
+        spades -->|short_gdna, short_cdna| amrfinder_pe
+    end
+
+    subgraph amr_long [4b - AMR Long-read]
+        %%metro entry: left | long_gdna, long_cdna
+        %%metro exit: right | long_gdna, long_cdna
+        diamond_se[Diamond BLASTX]
+        seqtk_se[seqtk subseq]
+        flye[Flye]
+        amrfinder_se[AMRFinder]
+        diamond_se -->|long_gdna, long_cdna| seqtk_se
+        seqtk_se -->|long_gdna, long_cdna| flye
+        flye -->|long_gdna, long_cdna| amrfinder_se
+    end
+
+    subgraph snp [5a - SNP Profiling]
+        %%metro entry: left | short_gdna, short_cdna, long_gdna, long_cdna
+        %%metro exit: right | short_gdna, short_cdna, long_gdna, long_cdna
+        bwa[BWA-MEM]
+        minimap[minimap2]
+        codon_freqs[Codon Frequencies]
+        bwa -->|short_gdna, short_cdna| codon_freqs
+        minimap -->|long_gdna, long_cdna| codon_freqs
+    end
+
+    subgraph coverage [5b - Coverage + Host QC]
+        %%metro entry: left | short_gdna, short_cdna, long_gdna, long_cdna
+        %%metro exit: right | short_gdna, short_cdna, long_gdna, long_cdna
+        kraken2_host[Kraken2 Host]
+        krakentools[KrakenTools Extract]
+        nonpareil[Nonpareil]
+        krakentools -->|short_gdna, short_cdna, long_gdna, long_cdna| nonpareil
+    end
+
+    subgraph reporting [6 - Reporting]
+        %%metro entry: left | short_gdna, short_cdna, long_gdna, long_cdna
+        multiqc[MultiQC]
+    end
+
+    cat_fastq -->|short_gdna, short_cdna| fastqc_raw_pe
+    cat_fastq -->|long_gdna, long_cdna| fastqc_raw_se
+    spikein -->|short_gdna, short_cdna| kraken2
+    spikein -->|short_gdna, short_cdna| sylph
+    spikein -->|short_gdna, short_cdna| diamond_pe
+    spikein -->|short_gdna, short_cdna| bwa
+    spikein -->|short_gdna, short_cdna| kraken2_host
+    spikein -->|short_gdna, short_cdna| krakentools
+    fastqc_trim_se -->|long_gdna, long_cdna| kraken2
+    fastqc_trim_se -->|long_gdna, long_cdna| krakentools
+    fastqc_trim_se -->|long_gdna, long_cdna| sylph
+    fastqc_trim_se -->|long_gdna, long_cdna| diamond_se
+    fastqc_trim_se -->|long_gdna, long_cdna| minimap
+    fastqc_trim_se -->|long_gdna, long_cdna| kraken2_host
+    kraken2 -->|short_gdna, short_cdna, long_gdna, long_cdna| multiqc
+    sylph_tax -->|short_gdna, short_cdna, long_gdna, long_cdna| multiqc
+    kraken2_host -->|short_gdna, short_cdna, long_gdna, long_cdna| multiqc
+    amrfinder_pe -->|short_gdna, short_cdna| multiqc
+    amrfinder_se -->|long_gdna, long_cdna| multiqc
+    codon_freqs -->|short_gdna, short_cdna, long_gdna, long_cdna| multiqc
+    nonpareil -->|short_gdna, short_cdna, long_gdna, long_cdna| multiqc

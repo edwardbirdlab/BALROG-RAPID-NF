@@ -1,0 +1,33 @@
+process KRAKEN2_SE {
+
+    label 'kraken2'
+    container 'quay.io/biocontainers/kraken2:2.17.1--pl5321h077b44d_0'
+
+    input:
+        tuple val(sample), path(reads)
+        path(db)
+        val(db_name)
+
+    output:
+        tuple val(sample), val(db_name), path("${prefix}_k2report.tsv"), emit: report
+        tuple val(sample), val(db_name), path("${prefix}_k2out.tsv"),    emit: output
+        path("versions.yml"),                                             emit: versions
+
+    script:
+    prefix = db_name ? "${sample}_${db_name}" : "${sample}"
+    """
+    kraken2 \
+        --db ${db} \
+        --threads ${task.cpus} \
+        --output ${prefix}_k2out.tsv \
+        --report ${prefix}_k2report.tsv \
+        --minimum-hit-groups ${params.k2_min_hit_groups} \
+        --confidence ${params.k2_confidence} \
+        ${reads}
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        kraken2: \$(kraken2 --version 2>&1 | head -1 | sed -e 's/Kraken version //' || echo "unknown")
+    END_VERSIONS
+    """
+}

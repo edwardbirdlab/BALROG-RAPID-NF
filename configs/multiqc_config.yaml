@@ -16,6 +16,9 @@ run_modules:
   - fastp
   - bbduk
   - bowtie2
+  - porechop
+  - filtlong
+  - nanostat
   - kraken
   - sylphtax
   - nonpareil
@@ -45,11 +48,26 @@ module_order:
       anchor: "bowtie2_spike"
       path_filters:
         - "bowtie2_spike/*.log"
+  - porechop:
+      name: "Porechop_ABI (ONT Adapter Trimming)"
+      anchor: "porechop_abi"
+      path_filters:
+        - "porechop/*_porechop.log"
+  - filtlong:
+      name: "Filtlong (ONT Quality/Length Filtering)"
+      anchor: "filtlong_filtering"
+      path_filters:
+        - "filtlong/*_filtlong.log"
   - fastqc:
       name: "FastQC (Trimmed Reads)"
       anchor: "fastqc_trimmed"
       path_filters:
         - "fastqc_trimmed/*_fastqc.zip"
+  - nanostat:
+      name: "NanoPlot (ONT QC)"
+      anchor: "nanoplot_qc"
+      path_filters:
+        - "nanoplot/*_NanoStats.txt"
   - kraken:
       name: "Kraken2 (Taxonomy)"
       anchor: "kraken2_taxonomy"
@@ -70,6 +88,11 @@ module_order:
       anchor: "nonpareil_coverage"
       path_filters:
         - "nonpareil/*.json"
+  - custom_content:
+      name: "SNP Profiling (Variant Details)"
+      anchor: "snp_profiling_detail"
+      path_filters:
+        - "snp_profiling/*_snp_detail_mqc.tsv"
 
 # Clean up sample names (strip common suffixes for cleaner tables)
 extra_fn_clean_exts:
@@ -89,6 +112,17 @@ extra_fn_clean_exts:
   - "_amrfinder_detail_mqc"
   - "_nonpareil"
   - "_kraken2_qc_mqc"
+  - "_pc"
+  - "_filtered"
+  - "_NanoStats"
+  - "_porechop"
+  - "_filtlong"
+  - "_snp_generalstats"
+  - "_snp_detail"
+  - "_snp_align_stats"
+  - "_codon_freqs"
+  - type: "regex"
+    pattern: "_nanoplot$"
 
 # General stats table: show key columns
 table_columns_visible:
