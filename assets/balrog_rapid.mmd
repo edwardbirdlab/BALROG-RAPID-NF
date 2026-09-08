@@ -14,6 +14,7 @@
 %%metro grid: amr_long | 2,2
 %%metro grid: snp | 2,3
 %%metro grid: coverage | 2,4
+%%metro grid: coi | 2,5
 %%metro grid: reporting | 3,3
 
 graph LR
@@ -105,7 +106,15 @@ graph LR
         krakentools -->|short_gdna, short_cdna, long_gdna, long_cdna| nonpareil
     end
 
-    subgraph reporting [6 - Reporting]
+    subgraph coi [6 - COI Insect ID]
+        %%metro entry: left | short_gdna, short_cdna
+        %%metro exit: right | short_gdna, short_cdna
+        kma[KMA]
+        filter_coi[Filter: Coverage + Identity]
+        kma -->|short_gdna, short_cdna| filter_coi
+    end
+
+    subgraph reporting [7 - Reporting]
         %%metro entry: left | short_gdna, short_cdna, long_gdna, long_cdna
         multiqc[MultiQC]
     end
@@ -118,6 +127,7 @@ graph LR
     spikein -->|short_gdna, short_cdna| bwa
     spikein -->|short_gdna, short_cdna| kraken2_host
     spikein -->|short_gdna, short_cdna| krakentools
+    spikein -->|short_gdna, short_cdna| kma
     fastqc_trim_se -->|long_gdna, long_cdna| kraken2
     fastqc_trim_se -->|long_gdna, long_cdna| krakentools
     fastqc_trim_se -->|long_gdna, long_cdna| sylph
@@ -131,3 +141,4 @@ graph LR
     amrfinder_se -->|long_gdna, long_cdna| multiqc
     codon_freqs -->|short_gdna, short_cdna, long_gdna, long_cdna| multiqc
     nonpareil -->|short_gdna, short_cdna, long_gdna, long_cdna| multiqc
+    filter_coi -->|short_gdna, short_cdna| multiqc

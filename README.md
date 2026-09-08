@@ -45,8 +45,8 @@ Short-read (`library=Short`) and long-read (`library=Long`) samples run through 
 
 ![BALROG-RAPID pipeline diagram](assets/pipeline_diagram.svg)
 
-Rendered with `nf-metro` (source: `docs/balrog_rapid.mmd`. A static
-version is available at [`assets/pipeline_diagram_static.png`](assets/pipeline_diagram_static.png).
+Rendered with `nf-metro` (source: `docs/balrog_rapid.mmd`, mirrored at `assets/balrog_rapid.mmd`). A
+static version is available at [`assets/pipeline_diagram_static.png`](assets/pipeline_diagram_static.png).
 
 
 ## Host Profiling (Optional)
@@ -180,6 +180,30 @@ Reads are aligned to the CDS reference using BWA-MEM (short reads) or minimap2 (
 
 **MultiQC output:** General Stats columns show positions profiled, mutants detected, and depth statistics. A detail table lists per-position amino acid and codon frequency distributions with low-depth warnings.
 
+## COI Insect ID (Optional, short reads only)
+
+Identifies the insect host from shotgun metagenomic reads using KMA against a reference set.
+
+```bash
+nextflow run main.nf \
+  -profile docker \
+  --sample_sheet samplesheet.csv \
+  --run_coi_id --kma_db /path/to/bold_coi_diptera_v5 \
+  ...
+```
+
+**Database** (built separately, not by this pipeline -- copy, do not rebuild): `--kma_db`, a directory containing the KMA index (`<prefix>.comp.b`, `.length.b`, `.seq.b`, `.name`; the prefix is auto-detected).
+
+**Both coverage and identity are required -- neither works alone on COI.** A 658bp COI barcode is tiled by only ~3 short read pairs, so coverage saturates fast: a wrong-family reference has been observed reaching 100% coverage at just 84% identity, in every one of 12 real test libraries. Conversely, a single read landing on a conserved stretch reaches 100% identity at ~3% coverage. Default floors: `Template_Coverage >= 95` AND `Query_Identity >= 95` (`--coi_min_coverage`, `--coi_min_identity`, both tunable) -- reproducible, not fully calibrated; validated on gDNA from six specimens, and known to fail on cDNA (see below).
+
+**BIN, not species, is often the only stable identifier.** 67% of BOLD COI records carry no species-level name, so each call reports the BOLD BIN (e.g. `BOLD:AFY8455`) alongside whatever taxon name is available. Depth is always reported next to coverage, since 100% coverage of a 658bp barcode can come from as few as ~10 reads.
+
+**A sample with no confident call is a real result, not a failure.** It occurred in 1 of 12 real libraries in validation -- the correct organism was present, just under the floors (see cDNA note below). The detail table reports "no confident hits" rather than being silently dropped or empty.
+
+**Optional lineage join:** pass `--coi_lineage_table /path/to/coi5p_derep_corrected.tsv` (the *corrected* BOLD dereplication table) to attach full kingdom-through-species lineage to each call, built once and joined in automatically. Without it, calls still report BIN and whatever taxon name KMA's own reference header carries.
+
+**cDNA note:** the control region is not transcribed, so cDNA coverage runs systematically lower than gDNA from the same specimen -- a known false negative in validation had the correct organism at 82.5% coverage / 94.8% identity, under both floors, while its gDNA counterpart called the same organism at 100%/95.6%. cDNA needs its own (currently uncalibrated) thresholds; treat a cDNA "no call" with that in mind.
+
 ## Parameters
 
 | Parameter | Default | Description |
@@ -215,6 +239,11 @@ Reads are aligned to the CDS reference using BWA-MEM (short reads) or minimap2 (
 | `--snp_min_base_quality` | 20 | Minimum per-base quality (Phred) for codon extraction |
 | `--snp_min_mapq` | 30 | Minimum mapping quality for read inclusion |
 | `--snp_min_depth` | 10 | Minimum codon depth for confident reporting |
+| `--run_coi_id` | false | Enable COI insect ID via KMA against BOLD COI (short reads only) |
+| `--kma_db` | null | Directory containing the KMA index |
+| `--coi_lineage_table` | null | Optional: corrected BOLD derep TSV, for joining full lineage onto calls |
+| `--coi_min_coverage` | 95.0 | Template_Coverage floor -- below this a COI call is rejected |
+| `--coi_min_identity` | 95.0 | Query_Identity floor -- below this a COI call is rejected |
 | `--run_taxonomy` | true | Enable/disable taxonomy profiling |
 | `--run_host_profiling` | true | Enable/disable host profiling |
 | `--run_amr` | true | Enable/disable AMR detection |
@@ -260,6 +289,9 @@ results/
 │   ├── extracted_reads/{sample}_amr_reads.fastq.gz    # long reads
 │   ├── assemblies/{sample}_contigs.fasta              # SPAdes (short) or Flye (long)
 │   └── amrfinder/{sample}_amrfinder.tsv
+├── coi_id/                                          # short reads only, when --run_coi_id
+│   ├── kma/{sample}.res, {sample}.mapstat           # per-template coverage/identity/depth + read counts
+│   └── bold_lineage.tsv                             # only when --coi_lineage_table is set
 ├── multiqc/
 │   ├── multiqc_report.html
 │   └── multiqc_data/
@@ -295,4 +327,5 @@ All processes run in containers. No local tool installation needed -- pick a pro
 | BWA + Samtools (SNP, short-read alignment) | `quay.io/biocontainers/mulled-v2-fe8faa35dbf6dc65a0f7f5d4ea12e31a79f73e40:219b6c272b25e7e642ae3ff0bf0c5c81a5135ab4-0` |
 | minimap2 + Samtools (SNP, long-read alignment) | `quay.io/biocontainers/mulled-v2-66534bcbb7031a148b13e2ad42583020b9cd25c4:e1ea28074233d7265a5dc2111d6e55130dff5653-2` |
 | pysam (Codon Extraction) | `quay.io/biocontainers/mulled-v2-480c331443a1d7f4cb82aa41315ac8ea4c9c0b45:3e0fc1ebdf2007459f18c33c65d38d2b031b0052-0` |
+| KMA (COI insect ID) | `quay.io/biocontainers/kma:1.6.13--h118bc1c_0@sha256:90e6...` (digest-pinned) |
 | MultiQC | `quay.io/biocontainers/multiqc:1.33--pyhdfd78af_0` |

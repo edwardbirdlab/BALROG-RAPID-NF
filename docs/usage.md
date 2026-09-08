@@ -54,6 +54,7 @@ Sample2,Long,gDNA,,,/path/to/Sample2.fastq.gz
 | `--run_nonpareil` (on by default) | Nonpareil coverage estimation | Runs on Kraken2-extracted bacterial reads when `--run_taxonomy` is also on; otherwise on the full read set. Disable with `--run_nonpareil false`. |
 | `--custom_qc` | `% Bacterial reads` column in the MultiQC General Stats table | Requires `--run_taxonomy`. |
 | `--run_snp_profiling` | Targeted amino-acid variant profiling at specific CDS positions | Requires `--snp_cds_fasta` and `--snp_positions_csv`. BWA-MEM (short reads) or minimap2 (long reads) alignment, per-read codon extraction via pysam. |
+| `--run_coi_id` | COI insect ID via KMA against BOLD COI (short reads only) | Requires `--kma_db`. Filters on both `Template_Coverage` and `Query_Identity` (`--coi_min_coverage`/`--coi_min_identity`, default 95/95) -- neither works alone on COI. Optional `--coi_lineage_table` joins full BOLD lineage onto calls. |
 
 Long-read samples automatically use Porechop_ABI + Filtlong + NanoPlot for QC (instead of FASTP/BBDuk) and
 Flye for AMR-subset assembly (instead of SPAdes) -- no extra flags needed, this follows from `library=Long`

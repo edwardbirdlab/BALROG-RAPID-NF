@@ -79,6 +79,10 @@ workflow {
         error "ERROR: --snp_positions_csv is required when --run_snp_profiling is enabled"
     }
 
+    if (params.run_coi_id && !params.kma_db) {
+        error "ERROR: --kma_db is required when --run_coi_id is enabled"
+    }
+
 
     // -------------------------------------------------------------------
     // Channel setup
@@ -180,6 +184,16 @@ workflow {
         ? Channel.fromPath(params.snp_positions_csv, checkIfExists: true).first()
         : Channel.value([])
 
+    // COI insect ID channels (optional, short-read only)
+    ch_kma_db = params.run_coi_id && params.kma_db
+        ? Channel.fromPath(params.kma_db, checkIfExists: true).first()
+        : Channel.value([])
+    // MAKE_LINEAGE_LOOKUP reads this directly only when --coi_lineage_table is
+    // set (see subworkflows/coi_id.nf); otherwise it's never consumed.
+    ch_coi_lineage_table = params.coi_lineage_table
+        ? Channel.fromPath(params.coi_lineage_table, checkIfExists: true).first()
+        : Channel.value([])
+
 
     // -------------------------------------------------------------------
     // Main workflow
@@ -225,6 +239,9 @@ workflow {
      Filtlong len : ${params.filtlong_min_length}
      Filtlong pct : ${params.filtlong_keep_percent}
      Flye mode    : ${params.flye_read_type}
+     Run COI ID   : ${params.run_coi_id}
+     KMA DB       : ${params.run_coi_id ? (params.kma_db ?: 'not set') : 'N/A'}
+     COI Lineage  : ${params.coi_lineage_table ?: 'not set (BIN/taxon only, no lineage join)'}
     ======================================
     """.stripIndent()
 
@@ -241,7 +258,9 @@ workflow {
         ch_bbduk_adapters,
         ch_spike_in_bt2,
         ch_snp_cds_fasta,
-        ch_snp_positions_csv
+        ch_snp_positions_csv,
+        ch_kma_db,
+        ch_coi_lineage_table
     )
 
     // -------------------------------------------------------------------
@@ -328,6 +347,9 @@ workflow {
             // SNP Profiling (merged short + long)
             BALROG_SHORT_READ.out.multiqc_snp
                 .mix(BALROG_LONG_READ.out.multiqc_snp)
+                .collect().ifEmpty([]),
+            // COI Insect ID (short-read only)
+            BALROG_SHORT_READ.out.multiqc_coi
                 .collect().ifEmpty([]),
             // Config and versions
             ch_multiqc_config.first(),

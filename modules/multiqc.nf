@@ -19,6 +19,7 @@ process MULTIQC {
         path('porechop/*')
         path('filtlong/*')
         path('snp_profiling/*')
+        path('coi_id/*')
         path(multiqc_config)
         path(software_versions)
 

@@ -93,6 +93,11 @@ module_order:
       anchor: "snp_profiling_detail"
       path_filters:
         - "snp_profiling/*_snp_detail_mqc.tsv"
+  - custom_content:
+      name: "COI Insect ID (Detail)"
+      anchor: "coi_detail"
+      path_filters:
+        - "coi_id/*_coi_detail_mqc.tsv"
 
 # Clean up sample names (strip common suffixes for cleaner tables)
 extra_fn_clean_exts:
@@ -121,6 +126,8 @@ extra_fn_clean_exts:
   - "_snp_detail"
   - "_snp_align_stats"
   - "_codon_freqs"
+  - "_coi_generalstats_mqc"
+  - "_coi_detail_mqc"
   - type: "regex"
     pattern: "_nanoplot$"
 

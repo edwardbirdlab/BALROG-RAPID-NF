@@ -35,6 +35,10 @@ results/
 │   ├── extracted_reads/{sample}_amr_reads.fastq.gz  # seqtk-subset reads (long reads)
 │   ├── assemblies/{sample}_contigs.fasta            # SPAdes (short reads) or Flye (long reads) micro-assembly
 │   └── amrfinder/{sample}_amrfinder.tsv             # AMRFinderPlus results
+├── coi_id/                                          # short reads only, when --run_coi_id
+│   ├── kma/{sample}.res                             # per-template coverage/identity/depth (the reportable KMA output)
+│   ├── kma/{sample}.mapstat                         # per-template read counts
+│   └── bold_lineage.tsv                             # only when --coi_lineage_table is set
 ├── multiqc/
 │   ├── multiqc_report.html                          # aggregated QC report (both read types merged)
 │   └── multiqc_report_data/
@@ -51,14 +55,16 @@ results/
   per-sample taxonomy and AMR-gene deliverables.
 - **`snp_profiling/codon_freqs/*_codon_freqs.tsv`** reports amino-acid frequency distributions at
   user-specified codon positions, for surveillance of known resistance/adaptive mutations in pooled samples.
+- **`coi_id/kma/*.res`** is the COI insect-ID deliverable (filtered/reported via the MultiQC detail table).
+  A sample with no confident call is a real result, not a dropped sample -- see docs/usage.md.
 - **`pipeline_info/software_versions.yml`** records the exact tool version used in every process, for
   a specific run's provenance.
 
 ## Notes
 
-- Directories for optional steps (`spike_in/`, `nonpareil/`, `bbduk/`, `snp_profiling/`) only appear when
-  the corresponding `--run_*` flag is set.
+- Directories for optional steps (`spike_in/`, `nonpareil/`, `bbduk/`, `snp_profiling/`, `coi_id/`)
+  only appear when the corresponding `--run_*` flag is set.
 - Host profiling produces one Kraken2 report per `(sample, host)` pair when `--host_sheet` is provided;
   it never filters reads, so downstream analyses always run on host-inclusive read sets.
-- Long-read samples never produce `spike_in/` or `fastp/`/`bbduk/` output -- those steps are short-read
-  specific (see [usage.md](usage.md)).
+- Long-read samples never produce `spike_in/`, `fastp/`/`bbduk/`, or `coi_id/` output -- those steps
+  are short-read specific (see [usage.md](usage.md)).

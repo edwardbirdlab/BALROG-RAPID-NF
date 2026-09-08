@@ -378,3 +378,13 @@ references:
     notes: >-
       Long-read metagenomic assembly for ONT AMR-subset reads (run with --meta). Additional co-authors
       omitted from the original citation (et al.).
+
+  - type: software
+    title: "KMA"
+    authors:
+      - name: "Citation to be added"
+    notes: >-
+      Alignment to the BOLD COI reference set for insect ID (--run_coi_id). Not in the author's existing
+      bibliographies; likely Clausen, P.T.L.C., Aarestrup, F.M. & Lund, O. (2018), Rapid and precise
+      alignment of raw reads against redundant databases with KMA, BMC Bioinformatics 19:307 -- confirm
+      before adding.

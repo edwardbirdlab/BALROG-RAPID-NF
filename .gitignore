@@ -9,3 +9,6 @@ results/
 
 # Raw screen recordings (source footage for assets/*.gif, *.png — not tracked)
 *.mov
+
+# Scratch/handoff material (source docs for features, not pipeline code)
+tmp/

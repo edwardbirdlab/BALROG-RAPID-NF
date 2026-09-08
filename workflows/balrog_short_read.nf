@@ -10,8 +10,10 @@
  *   5. Nonpareil coverage estimation (optional)
  *      - When taxonomy enabled: bacterial read extraction → Nonpareil (after step 2)
  *      - When taxonomy disabled: runs on full reads (parallel with 2-4)
+ *   6. Targeted SNP/AA variant profiling (optional) - parallel with 2-4
+ *   7. COI insect ID (optional) - KMA against BOLD COI, parallel with 2-4
  *
- * Steps 2-4 run in parallel. Step 5 runs after step 2 when taxonomy is enabled.
+ * Steps 2-4, 6, 7 run in parallel. Step 5 runs after step 2 when taxonomy is enabled.
  * COLLECT_VERSIONS and MULTIQC are handled in main.nf for unified reporting.
  */
 
@@ -25,6 +27,7 @@ include { NONPAREIL               } from '../modules/nonpareil'
 include { SUMMARIZE_AMRFINDER   } from '../modules/summarize_amrfinder'
 include { SUMMARIZE_KRAKEN2_QC } from '../modules/summarize_kraken2_qc'
 include { SNP_PROFILING        } from '../subworkflows/snp_profiling'
+include { COI_ID               } from '../subworkflows/coi_id'
 
 
 workflow BALROG_SHORT_READ {
@@ -40,6 +43,8 @@ workflow BALROG_SHORT_READ {
         ch_spike_in_bt2    // path to pre-built Bowtie2 index directory (value channel)
         ch_snp_cds_fasta   // path to CDS FASTA for SNP profiling (value channel)
         ch_snp_positions_csv // path to positions CSV for SNP profiling (value channel)
+        ch_kma_db             // directory containing the KMA index (value channel)
+        ch_coi_lineage_table  // path to the corrected BOLD derep table, or [] (value channel)
 
     main:
         // Collect all versions.yml files from every process
@@ -58,6 +63,7 @@ workflow BALROG_SHORT_READ {
         ch_multiqc_nonpareil   = Channel.empty()
         ch_multiqc_custom_qc   = Channel.empty()
         ch_multiqc_snp         = Channel.empty()
+        ch_multiqc_coi         = Channel.empty()
 
         // Step 1: Quality control and trimming
         if (params.run_qc) {
@@ -159,6 +165,13 @@ workflow BALROG_SHORT_READ {
             ch_multiqc_snp = SNP_PROFILING.out.multiqc_snp
         }
 
+        // Step 7: COI insect ID (runs in parallel with 2-4)
+        if (params.run_coi_id) {
+            COI_ID(ch_reads, ch_kma_db, ch_coi_lineage_table)
+            ch_versions = ch_versions.mix(COI_ID.out.versions)
+            ch_multiqc_coi = COI_ID.out.multiqc_coi
+        }
+
     emit:
         versions             = ch_versions
         multiqc_fastqc_raw   = ch_multiqc_fastqc_raw
@@ -173,4 +186,5 @@ workflow BALROG_SHORT_READ {
         multiqc_nonpareil    = ch_multiqc_nonpareil
         multiqc_custom_qc    = ch_multiqc_custom_qc
         multiqc_snp          = ch_multiqc_snp
+        multiqc_coi          = ch_multiqc_coi
 }
