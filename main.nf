@@ -188,8 +188,7 @@ workflow {
     ch_kma_db = params.run_coi_id && params.kma_db
         ? Channel.fromPath(params.kma_db, checkIfExists: true).first()
         : Channel.value([])
-    // MAKE_LINEAGE_LOOKUP reads this directly only when --coi_lineage_table is
-    // set (see subworkflows/coi_id.nf); otherwise it's never consumed.
+    // MAKE_LINEAGE_LOOKUP reads this directly only when --coi_lineage_table is set
     ch_coi_lineage_table = params.coi_lineage_table
         ? Channel.fromPath(params.coi_lineage_table, checkIfExists: true).first()
         : Channel.value([])

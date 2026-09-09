@@ -14,7 +14,11 @@
 process KMA {
 
     label 'kma'
-    container 'quay.io/biocontainers/kma:1.6.13--h118bc1c_0@sha256:90e62ef87fd8ff3bdcb2ce316dfa69faf854396e7e3a18bd57d7a2b08920759d'
+    // Digest-pinned, no tag: Apptainer/Singularity rejects a combined
+    // tag@digest reference ("Docker references with both a tag and digest
+    // are currently not supported"), even though Docker accepts it. The
+    // digest alone is still fully pinned -- this is kma:1.6.13--h118bc1c_0.
+    container 'quay.io/biocontainers/kma@sha256:90e62ef87fd8ff3bdcb2ce316dfa69faf854396e7e3a18bd57d7a2b08920759d'
 
     input:
         tuple val(sample), path(r1), path(r2)
