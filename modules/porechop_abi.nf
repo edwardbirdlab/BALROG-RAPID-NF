@@ -21,6 +21,8 @@ process PORECHOP_ABI {
 
     script:
     """
+    set -o pipefail
+
     porechop_abi \\
         -abi \\
         -i ${reads} \\
