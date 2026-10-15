@@ -14,8 +14,8 @@ process FASTQC {
     script:
     """
     mkdir ${sample}_fastqc
-    ln -s ${r1} ${sample}_R1.fastq.gz
-    ln -s ${r2} ${sample}_R2.fastq.gz
+    [ "${r1}" = "${sample}_R1.fastq.gz" ] || ln -s ${r1} ${sample}_R1.fastq.gz
+    [ "${r2}" = "${sample}_R2.fastq.gz" ] || ln -s ${r2} ${sample}_R2.fastq.gz
     fastqc -o ${sample}_fastqc -t ${task.cpus} --memory ${Math.min(task.memory.toMega(), 10000)} ${sample}_R1.fastq.gz ${sample}_R2.fastq.gz
 
     cat <<-END_VERSIONS > versions.yml
