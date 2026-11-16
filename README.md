@@ -46,7 +46,7 @@ Short-read (`library=Short`) and long-read (`library=Long`) samples run through 
 ![BALROG-RAPID pipeline diagram](assets/pipeline_diagram.svg)
 
 Rendered with `nf-metro` (source: `docs/balrog_rapid.mmd`, mirrored at `assets/balrog_rapid.mmd`). A
-static version is available at [`assets/pipeline_diagram_static.png`](assets/pipeline_diagram_static.png).
+static version is available at [`assets/pipeline_diagram_static.svg`](assets/pipeline_diagram_static.svg).
 
 
 ## Host Profiling (Optional)
