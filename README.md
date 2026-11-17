@@ -218,6 +218,7 @@ nextflow run main.nf \
 | `--k2_min_hit_groups` | 3 | Kraken2 minimum hit groups |
 | `--fastp_q` | 20 | FASTP minimum quality score (short reads) |
 | `--fastp_minlen` | 100 | FASTP minimum read length (short reads) |
+| `--fastp_n_base_limit` | 5 | FASTP: discard a read pair if either read has more N bases than this. |
 | `--diamond_evalue` | 1e-10 | Diamond E-value threshold |
 | `--diamond_max_targets` | 500 | Diamond max target sequences |
 | `--run_qc` | true | Enable/disable read QC |

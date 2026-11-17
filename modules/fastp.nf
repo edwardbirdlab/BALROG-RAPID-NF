@@ -20,6 +20,7 @@ process FASTP {
         -O ${sample}_trimmed_R2.fastq.gz \
         -q ${params.fastp_q} \
         -l ${params.fastp_minlen} \
+        -n ${params.fastp_n_base_limit} \
         --thread ${task.cpus} \
         -j ${sample}_fastp.json \
         -h ${sample}_fastp.html

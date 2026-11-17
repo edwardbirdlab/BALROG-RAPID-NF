@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- `--fastp_n_base_limit` (default 5, fastp's own default, so existing runs are unchanged). The FASTP
+  module had no way to change fastp's N limit.
 - COI-based insect ID (short reads only, `--run_coi_id`): "run KMA, filter two columns." KMA aligns
   reads to a curated BOLD COI reference set (402,116 references, Diptera only), and calls are kept only
   when BOTH `Template_Coverage` and `Query_Identity` clear their floors (`--coi_min_coverage`/
